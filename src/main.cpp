@@ -5,6 +5,10 @@
 #include <iterator>
 #include <iostream>
 
+struct coin{
+    cv::Point center;
+    int radius;
+};
 
 /// Detection de pieces de monnaie
 void detectionCoins()
@@ -49,19 +53,25 @@ int main(int argc, char** argv)
     HoughCircles( im_gray, circles, CV_HOUGH_GRADIENT, 1, im_gray.rows/16, 200, 100, 0, 0 );
     std::cout<<" houghcircles "<<circles.size()<<std::endl;
 
+    // Vector of coins
+    std::vector<coin> vector_coins;
     // Draw the circles detected
     for( size_t i = 0; i < circles.size(); i++ )
     {
+        coin coin_detected;
         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+        coin_detected.center = center;
         int radius = cvRound(circles[i][2]);
+        coin_detected.radius = radius;
         // circle center
         circle( im, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
         // circle outline
         circle( im, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
+        vector_coins.push_back(coin_detected);
     }
 
     imshow( "Hough Circle Transform Demo", im );
-    cv::waitKey();
+    cv::waitKey(0);
 
     return 0;
 }
