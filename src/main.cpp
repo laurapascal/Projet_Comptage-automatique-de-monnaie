@@ -10,14 +10,6 @@ struct coin{
     int radius;
 };
 
-/// Detection de pieces de monnaie
-void detectionCoins()
-{
-
-}
-
-
-
 int main(int argc, char** argv)
 {
     cv::Mat im, im_gray;
@@ -38,41 +30,59 @@ int main(int argc, char** argv)
 
     cv::vector<cv::Vec3f> circles;
 
-    // Apply the Hough Transform to find the circles
+    /// Apply the Hough Transform to find the circles
     // im_gray: Input image (grayscale)
     // circles: A vector that stores sets of 3 values: x_{c}, y_{c}, r for each detected circle.
     // CV_HOUGH_GRADIENT: Define the detection method. Currently this is the only one available in OpenCV
     // dp = 1: The inverse ratio of resolution
     // min_dist = im_gray.rows/8: Minimum distance between detected centers
     // param_1 = 200: Upper threshold for the internal Canny edge detector
-    // param_2 = 100*: Threshold for center detection.
+    // param_2 = 65*: Threshold for center detection.
     // min_radius = 0: Minimum radio to be detected. If unknown, put zero as default.
     // max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
 
-
-    HoughCircles( im_gray, circles, CV_HOUGH_GRADIENT, 1, im_gray.rows/16, 200, 100, 0, 0 );
-    std::cout<<" houghcircles "<<circles.size()<<std::endl;
+    cv::HoughCircles( im_gray, circles, CV_HOUGH_GRADIENT, 1, im_gray.rows/8, 200, 40, 10, 0);
 
     // Vector of coins
     std::vector<coin> vector_coins;
-    // Draw the circles detected
+
+    /// Treatement of the found circles
     for( size_t i = 0; i < circles.size(); i++ )
     {
-        coin coin_detected;
+        bool draw_circle = true;
         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        coin_detected.center = center;
         int radius = cvRound(circles[i][2]);
-        coin_detected.radius = radius;
-        // circle center
-        circle( im, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
-        // circle outline
-        circle( im, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
-        vector_coins.push_back(coin_detected);
+
+        for ( unsigned int j = 0; j < vector_coins.size(); j++)
+
+        {
+            cv::Point center_temp = vector_coins[j].center;
+            int radius_temp = vector_coins[j].radius;
+
+            // Removing circles drawn on other circles
+            if(std::sqrt((center.x-center_temp.x)*(center.x-center_temp.x) + (center.y-center_temp.y)*(center.y-center_temp.y)) < (radius+radius_temp))
+            {
+                draw_circle = false;
+            }
+
+        }
+
+        // Draw the circles
+        if(draw_circle)
+        {
+            coin coin_detected;
+            coin_detected.center = center;
+            coin_detected.radius = radius;
+            // circle center
+            circle( im, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
+            // circle outline
+            circle( im, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
+            vector_coins.push_back(coin_detected);
+        }
     }
 
     imshow( "Hough Circle Transform Demo", im );
     cv::waitKey(0);
-
     return 0;
 }
 
