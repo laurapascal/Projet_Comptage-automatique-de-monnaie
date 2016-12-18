@@ -4,6 +4,7 @@
 #include <list>
 #include <iterator>
 #include <iostream>
+#include <string>
 
 struct coin{
     cv::Point center;
@@ -12,12 +13,11 @@ struct coin{
 
 int main(int argc, char** argv)
 {
-    cv::Mat im, im_gray;
+    cv::Mat im, im_gray, im2;
 
-    std::cout<<"main"<<std::endl;
     // Read the image
     im = cv::imread( argv[1], 1 );
-
+    im2 = im.clone();
 
     if(!im.data )
     { return -1; }
@@ -79,6 +79,15 @@ int main(int argc, char** argv)
             circle( im, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
             vector_coins.push_back(coin_detected);
         }
+    }
+
+    /// Extract each coins
+    for( unsigned int i = 0; i < vector_coins.size(); i++ )
+    {
+        cv::Mat extrated_coin;
+        extrated_coin = im2(cv::Rect(vector_coins[i].center.x-vector_coins[i].radius,vector_coins[i].center.y-vector_coins[i].radius,vector_coins[i].radius*2,vector_coins[i].radius*2));
+        std::string name_extrated_coin = "output/image_test" + std::to_string(i) + ".jpg";
+        cv::imwrite( name_extrated_coin, extrated_coin);
     }
 
     imshow( "Hough Circle Transform Demo", im );
