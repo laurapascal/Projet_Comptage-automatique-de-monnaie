@@ -24,4 +24,4 @@ add_executable(
 	${source_files}
 )
 
-TARGET_LINK_LIBRARIES(pgm ${OpenCV_LIBS})
+TARGET_LINK_LIBRARIES(pgm ${OpenCV_LIBS} ${QT_LIBRARIES})

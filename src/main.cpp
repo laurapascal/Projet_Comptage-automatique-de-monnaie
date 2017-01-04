@@ -5,11 +5,15 @@
 #include <iterator>
 #include <iostream>
 #include <string>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QString>
 
 struct coin{
     cv::Point center;
     int radius;
 };
+int comparaison(QString repertory_database, QString repertory_extracted_coins);
 
 int main(int argc, char** argv)
 {
@@ -167,21 +171,52 @@ int main(int argc, char** argv)
     /** ********************************************************************************* **/
 
     /** ******************************* EXTRACT EACH COINS ****************************** **/
-
     for( unsigned int i = 0; i < vector_coins_m2.size(); i++ )
     {
-        cv::Mat extrated_coin;
-        extrated_coin = im2(cv::Rect(vector_coins_m2[i].center.x-vector_coins_m2[i].radius,vector_coins_m2[i].center.y-vector_coins_m2[i].radius,vector_coins_m2[i].radius*2,vector_coins_m2[i].radius*2));
-        std::string name_extrated_coin = "output/image_test" + std::to_string(i) + ".jpg";
-        cv::imwrite( name_extrated_coin, extrated_coin);
+        cv::Mat extracted_coin;
+        extracted_coin = im2(cv::Rect(vector_coins_m2[i].center.x-vector_coins_m2[i].radius,vector_coins_m2[i].center.y-vector_coins_m2[i].radius,vector_coins_m2[i].radius*2,vector_coins_m2[i].radius*2));
+        std::string name_extracted_coin = "output/coin" + std::to_string(i) + ".jpg";
+        cv::imwrite( name_extracted_coin, extracted_coin);
     }
 
     /** ********************************************************************************* **/
 
-
+    // Display of the two methods to find the coins
     imshow( "Method1", im_m1 );
     imshow( "Method2", im_m2 );
+
+
+    /** ********************************** COMPARAISON ********************************** **/
+
+    comparaison("database","output");
+
+    /** ********************************************************************************* **/
+
     cv::waitKey(0);
     return 0;
 }
 
+int comparaison(QString repertory_database, QString repertory_extracted_coins)
+{
+
+    QDir Dir_extracted_coins(repertory_extracted_coins);
+    QFileInfoList fileList_extracted_coins;
+    fileList_extracted_coins.append(Dir_extracted_coins.entryInfoList());
+    for( int j = 2; j < fileList_extracted_coins.size(); j++)
+    {
+        cv::Mat img_extracted_coin = cv::imread( fileList_extracted_coins[j].absoluteFilePath().toStdString(), CV_LOAD_IMAGE_GRAYSCALE );
+
+        /// Comparison with our data
+        QDir Dir_database(repertory_database);
+        QFileInfoList fileList_database;
+        fileList_database.append(Dir_database.entryInfoList());
+        for( int i = 2; i < fileList_database.size(); i++)
+        {
+            cv::Mat img_database = cv::imread( fileList_database[i].absoluteFilePath().toStdString(), CV_LOAD_IMAGE_GRAYSCALE );
+
+        }
+    }
+
+    cv::waitKey(0);
+    return 0;
+}
