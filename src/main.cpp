@@ -269,8 +269,11 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
             cv::drawKeypoints(img_database,keypoints_scene,img_KPS, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
             cv::imshow( "Scene Key Points", img_KPS );
 
-            //-- Step 3: Matching descriptor vectors using FLANN matcher
-            cv::BFMatcher matcher(cv::NORM_L2);
+            //-- Step 3: Matching descriptor vectors
+            //   using FLANN matcher
+            cv::FlannBasedMatcher matcher;
+            //   using Brut Force matcher
+//            cv::BFMatcher matcher(cv::NORM_L2);
             std::vector< cv::DMatch > matches;
             matcher.match( descriptors_object, descriptors_scene, matches );
 
@@ -326,8 +329,11 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
             cv::drawKeypoints(img_database,keypoints_scene,img_KPS, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
             cv::imshow( "Scene Key Points", img_KPS );
 
-            //-- Step 3: Matching descriptor vectors using FLANN matcher
-            cv::BFMatcher matcher(cv::NORM_L2);
+            //-- Step 3: Matching descriptor vectors
+            //   using FLANN matcher
+            cv::FlannBasedMatcher matcher;
+            //   using Brut Force matcher
+//            cv::BFMatcher matcher(cv::NORM_L2);
             std::vector< cv::DMatch > matches;
             matcher.match( descriptors_object, descriptors_scene, matches );
 
