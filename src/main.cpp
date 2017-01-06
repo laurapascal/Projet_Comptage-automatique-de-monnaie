@@ -181,6 +181,16 @@ int main(int argc, char** argv)
     /** ********************************************************************************* **/
 
     /** ******************************* EXTRACT EACH COINS ****************************** **/
+    // Delete each file in the folder "output"
+    QDir Dir_extracted_coins("output");
+    QFileInfoList fileList_extracted_coins;
+    fileList_extracted_coins.append(Dir_extracted_coins.entryInfoList());
+
+    for( int j = 2; j < fileList_extracted_coins.size(); j++)
+    {
+        Dir_extracted_coins.remove(fileList_extracted_coins[j].absoluteFilePath());
+    }
+    // Extract each coins in a floder "output"
     for( unsigned int i = 0; i < vector_coins_m1.size(); i++ )
     {
         cv::Mat extracted_coin;
