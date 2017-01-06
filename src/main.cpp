@@ -7,8 +7,8 @@
 #include <string>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFile>
 #include <QString>
-#include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core/core.hpp"
@@ -17,7 +17,8 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/nonfree/nonfree.hpp"
 #include <opencv2/nonfree/features2d.hpp>
-
+#include "data.h"
+#include "database.h"
 
 struct coin{
     cv::Point center;
@@ -218,7 +219,7 @@ int main(int argc, char** argv)
 
 int comparaison(QString repertory_database, QString repertory_extracted_coins)
 {
-
+    database db(repertory_database);
     QDir Dir_extracted_coins(repertory_extracted_coins);
     QFileInfoList fileList_extracted_coins;
     fileList_extracted_coins.append(Dir_extracted_coins.entryInfoList());
@@ -231,18 +232,13 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
         double min_dist = 100;
 
         /// Comparison with our data
-        QDir Dir_database(repertory_database);
-        QFileInfoList fileList_database;
-        fileList_database.append(Dir_database.entryInfoList());
-        for( int i = 2; i < fileList_database.size(); i++)
+        for( unsigned int i = 0; i < db.vector_data.size(); i++)
         {
-            cv::Mat img_database = cv::imread( fileList_database[i].absoluteFilePath().toStdString(), CV_LOAD_IMAGE_GRAYSCALE );
-            std::cout<<fileList_database[i].absoluteFilePath().toStdString()<<std::endl;
-
+            cv::Mat img_database = db.vector_data[i].get_image();
 
             //-- Step 1: Detect the keypoints using SIFT Detector
             // SIFT( int nfeatures=0, int nOctaveLayers=3,double contrastThreshold=0.04, double edgeThreshold=10,double sigma=1.6);
-            cv::SiftFeatureDetector detector( 1000, 3, 0.04, 10, 1.0 );
+            cv::SiftFeatureDetector detector( 4000, 3, 0.04, 10, 1.0 );
 
             // SURF(double hessianThreshold, int nOctaves=4, int nOctaveLayers=2,bool extended=true, bool upright=false);
             //            int minHessian = 100000;
@@ -261,14 +257,6 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
             extractor.compute( img_extracted_coin, keypoints_object, descriptors_object );
             extractor.compute( img_database, keypoints_scene, descriptors_scene );
 
-            cv::Mat img_KPO;
-            cv::drawKeypoints(img_extracted_coin,keypoints_object,img_KPO, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-            cv::imshow( "Object Key Points", img_KPO );
-
-            cv::Mat img_KPS;
-            cv::drawKeypoints(img_database,keypoints_scene,img_KPS, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-            cv::imshow( "Scene Key Points", img_KPS );
-
             //-- Step 3: Matching descriptor vectors
             //   using FLANN matcher
             cv::FlannBasedMatcher matcher;
@@ -277,11 +265,12 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
             std::vector< cv::DMatch > matches;
             matcher.match( descriptors_object, descriptors_scene, matches );
 
-            std::cout<<"key_points_object: "<<keypoints_object.size()<<std::endl;
-            std::cout<<"descriptors_object: "<<descriptors_object.size()<<std::endl;
-            std::cout<<"keypoints_scene: "<<keypoints_scene.size()<<std::endl;
-            std::cout<<"descriptors_scene: "<<descriptors_scene.size()<<std::endl;
-            std::cout<<"matches: "<<matches.size()<<std::endl;
+            // Debug
+//            std::cout<<"key_points_object: "<<keypoints_object.size()<<std::endl;
+//            std::cout<<"descriptors_object: "<<descriptors_object.size()<<std::endl;
+//            std::cout<<"keypoints_scene: "<<keypoints_scene.size()<<std::endl;
+//            std::cout<<"descriptors_scene: "<<descriptors_scene.size()<<std::endl;
+//            std::cout<<"matches: "<<matches.size()<<std::endl;
 
             //-- Quick calculation of max and min distances between keypoints
             for( int i = 0; i < descriptors_object.rows; i++ )
@@ -295,10 +284,10 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
         printf("-- Min dist : %f \n", min_dist );
 
         /// Comparison with our data
-        for( int i = 2; i < fileList_database.size(); i++)
+        for( unsigned int i = 0; i < db.vector_data.size(); i++)
         {
-            cv::Mat img_database = cv::imread( fileList_database[i].absoluteFilePath().toStdString(), CV_LOAD_IMAGE_GRAYSCALE );
-            std::cout<<fileList_database[i].absoluteFilePath().toStdString()<<std::endl;
+            cv::Mat img_database = db.vector_data[i].get_image();
+            std::cout<<db.vector_data[i].data_path.toStdString()<<std::endl;
 
             //-- Step 1: Detect the keypoints using SIFT Detector
             // SIFT( int nfeatures=0, int nOctaveLayers=3,double contrastThreshold=0.04, double edgeThreshold=10,double sigma=1.6);
@@ -321,13 +310,14 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
             extractor.compute( img_extracted_coin, keypoints_object, descriptors_object );
             extractor.compute( img_database, keypoints_scene, descriptors_scene );
 
-            cv::Mat img_KPO;
-            cv::drawKeypoints(img_extracted_coin,keypoints_object,img_KPO, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-            cv::imshow( "Object Key Points", img_KPO );
+            // Affichage des feautures points
+//            cv::Mat img_KPO;
+//            cv::drawKeypoints(img_extracted_coin,keypoints_object,img_KPO, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+//            cv::imshow( "Object Key Points", img_KPO );
 
-            cv::Mat img_KPS;
-            cv::drawKeypoints(img_database,keypoints_scene,img_KPS, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-            cv::imshow( "Scene Key Points", img_KPS );
+//            cv::Mat img_KPS;
+//            cv::drawKeypoints(img_database,keypoints_scene,img_KPS, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+//            cv::imshow( "Scene Key Points", img_KPS );
 
             //-- Step 3: Matching descriptor vectors
             //   using FLANN matcher

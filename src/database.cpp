@@ -19,15 +19,12 @@ database::database(QString path_database_param)
         {
             // remplissage de notre vector_data
             std::string data_value = fileinfo.baseName().toStdString(); // nom de sous-repertoire
-            QString data_path = fileList[i].absoluteFilePath();
+            QString data_path = fileList[i].absoluteFilePath(); // path du fichier
             data data_coin(data_value,data_path);
             vector_data.push_back(data_coin);
         }
         // Remplissage de notre map
         info_data[fileinfo.baseName().toStdString()] = fileList.size();
-
-
-
     }
 
 }
