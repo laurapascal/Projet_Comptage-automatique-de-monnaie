@@ -17,14 +17,11 @@ database::database(QString path_database_param)
         fileList.append(Dir_ss_repertory.entryInfoList());
         for( int i = 2; i < fileList.size(); i++)
         {
-            // remplissage de notre vector_data
-            std::string data_value = fileinfo.baseName().toStdString(); // nom de sous-repertoire
+            // Remplissage de notre map
             QString data_path = fileList[i].absoluteFilePath(); // path du fichier
-            data data_coin(data_value,data_path);
-            vector_data.push_back(data_coin);
+            std::string data_value = fileinfo.baseName().toStdString();
+            map_data[data_path] = data_value;
         }
-        // Remplissage de notre map
-        info_data[fileinfo.baseName().toStdString()] = fileList.size();
     }
 
 }

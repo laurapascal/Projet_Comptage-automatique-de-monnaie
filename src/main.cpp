@@ -1,6 +1,4 @@
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
 #include <list>
 #include <iterator>
 #include <iostream>
@@ -17,14 +15,14 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/nonfree/nonfree.hpp"
 #include <opencv2/nonfree/features2d.hpp>
-#include "data.h"
 #include "database.h"
+#include "registration.h"
 
 struct coin{
     cv::Point center;
     int radius;
 };
-int comparaison(QString repertory_database, QString repertory_extracted_coins);
+int registration_coin(QString repertory_database, QString repertory_extracted_coins);
 
 int main(int argc, char** argv)
 {
@@ -207,9 +205,9 @@ int main(int argc, char** argv)
     imshow( "Method2", im_m2 );
 
 
-    /** ********************************** COMPARAISON ********************************** **/
+    /** ********************************** REGISTRATION ********************************** **/
 
-    comparaison("database","output");
+    registration_coin("database","output");
 
     /** ********************************************************************************* **/
 
@@ -217,142 +215,31 @@ int main(int argc, char** argv)
     return 0;
 }
 
-int comparaison(QString repertory_database, QString repertory_extracted_coins)
+int registration_coin(QString repertory_database, QString repertory_extracted_coins)
 {
     database db(repertory_database);
+    registration rg("sift","flann");
     QDir Dir_extracted_coins(repertory_extracted_coins);
     QFileInfoList fileList_extracted_coins;
     fileList_extracted_coins.append(Dir_extracted_coins.entryInfoList());
     for( int j = 2; j < fileList_extracted_coins.size(); j++)
     {
-        cv::Mat img_extracted_coin = cv::imread( fileList_extracted_coins[j].absoluteFilePath().toStdString(), CV_LOAD_IMAGE_GRAYSCALE );
+        rg.creation_image_extracted_coin(fileList_extracted_coins[j].absoluteFilePath());
         std::cout<<fileList_extracted_coins[j].absoluteFilePath().toStdString()<<std::endl;
 
-        double max_dist = 0;
-        double min_dist = 100;
+        rg.creation_keypoints_extracted_coin();
+        rg.creation_descriptors_extracted_coin();
 
         /// Comparison with our data
-        for( unsigned int i = 0; i < db.vector_data.size(); i++)
+        for(std::map<QString,std::string>::iterator it=db.map_data.begin() ; it!=db.map_data.end() ; ++it)
         {
-            cv::Mat img_database = db.vector_data[i].get_image();
+            rg.creation_image_data(it->first);
+            QString path = it->first;
+            std::cout<<path.toStdString()<<std::endl;
 
-            //-- Step 1: Detect the keypoints using SIFT Detector
-            // SIFT( int nfeatures=0, int nOctaveLayers=3,double contrastThreshold=0.04, double edgeThreshold=10,double sigma=1.6);
-            cv::SiftFeatureDetector detector( 4000, 3, 0.04, 10, 1.0 );
-
-            // SURF(double hessianThreshold, int nOctaves=4, int nOctaveLayers=2,bool extended=true, bool upright=false);
-            //            int minHessian = 100000;
-            //            cv::SurfFeatureDetector detector( minHessian );
-
-            //ORB
-            //cv::OrbFeatureDetector detector;
-
-            std::vector<cv::KeyPoint> keypoints_object, keypoints_scene;
-
-            detector.detect( img_extracted_coin, keypoints_object );
-            detector.detect( img_database, keypoints_scene );
-
-            //-- Step 2: Calculate descriptors (feature vectors)
-            cv::SiftDescriptorExtractor extractor;
-
-            cv::Mat descriptors_object, descriptors_scene;
-
-            extractor.compute( img_extracted_coin, keypoints_object, descriptors_object );
-            extractor.compute( img_database, keypoints_scene, descriptors_scene );
-
-            //-- Step 3: Matching descriptor vectors
-            //   using FLANN matcher
-            cv::FlannBasedMatcher matcher;
-            //   using Brut Force matcher
-//            cv::BFMatcher matcher(cv::NORM_L2);
-            std::vector< cv::DMatch > matches;
-            matcher.match( descriptors_object, descriptors_scene, matches );
-
-            // Debug
-//            std::cout<<"key_points_object: "<<keypoints_object.size()<<std::endl;
-//            std::cout<<"descriptors_object: "<<descriptors_object.size()<<std::endl;
-//            std::cout<<"keypoints_scene: "<<keypoints_scene.size()<<std::endl;
-//            std::cout<<"descriptors_scene: "<<descriptors_scene.size()<<std::endl;
-//            std::cout<<"matches: "<<matches.size()<<std::endl;
-
-            //-- Quick calculation of max and min distances between keypoints
-            for( int i = 0; i < descriptors_object.rows; i++ )
-            { double dist = matches[i].distance;
-                if( dist < min_dist ) min_dist = dist;
-                if( dist > max_dist ) max_dist = dist;
-            }
-        }
-
-        printf("-- Max dist : %f \n", max_dist );
-        printf("-- Min dist : %f \n", min_dist );
-
-        /// Comparison with our data
-        for( unsigned int i = 0; i < db.vector_data.size(); i++)
-        {
-            cv::Mat img_database = db.vector_data[i].get_image();
-            std::cout<<db.vector_data[i].data_path.toStdString()<<std::endl;
-
-            //-- Step 1: Detect the keypoints using SIFT Detector
-            // SIFT( int nfeatures=0, int nOctaveLayers=3,double contrastThreshold=0.04, double edgeThreshold=10,double sigma=1.6);
-            cv::SiftFeatureDetector detector( 1000, 3, 0.04, 10, 1.0 );
-
-
-            // SURF(double hessianThreshold, int nOctaves=4, int nOctaveLayers=2,bool extended=true, bool upright=false);
-            //            int minHessian = 100000;
-            //            cv::SurfFeatureDetector detector( minHessian );
-
-            // ORB
-            // cv::OrbFeatureDetector detector;
-
-            std::vector<cv::KeyPoint> keypoints_object, keypoints_scene;
-
-            detector.detect( img_extracted_coin, keypoints_object );
-            detector.detect( img_database, keypoints_scene );
-
-            //-- Step 2: Calculate descriptors (feature vectors)
-            cv::SiftDescriptorExtractor extractor;
-
-            cv::Mat descriptors_object, descriptors_scene;
-
-            extractor.compute( img_extracted_coin, keypoints_object, descriptors_object );
-            extractor.compute( img_database, keypoints_scene, descriptors_scene );
-
-            // Affichage des feautures points
-//            cv::Mat img_KPO;
-//            cv::drawKeypoints(img_extracted_coin,keypoints_object,img_KPO, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-//            cv::imshow( "Object Key Points", img_KPO );
-
-//            cv::Mat img_KPS;
-//            cv::drawKeypoints(img_database,keypoints_scene,img_KPS, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-//            cv::imshow( "Scene Key Points", img_KPS );
-
-            //-- Step 3: Matching descriptor vectors
-            //   using FLANN matcher
-            cv::FlannBasedMatcher matcher;
-            //   using Brut Force matcher
-//            cv::BFMatcher matcher(cv::NORM_L2);
-            std::vector< cv::DMatch > matches;
-            matcher.match( descriptors_object, descriptors_scene, matches );
-
-            //-- Draw only "good" matches (i.e. whose distance is less than 3*min_dist )
-            std::vector< cv::DMatch > good_matches;
-
-            for( int i = 0; i < descriptors_object.rows; i++ )
-            { if( matches[i].distance < 3*min_dist )
-                { good_matches.push_back( matches[i]); }
-            }
-
-            std::cout<<"Good matches:"<<good_matches.size()<<std::endl;
-
-            cv::Mat img_matches;
-            cv::drawMatches( img_extracted_coin, keypoints_object, img_database, keypoints_scene,
-                             good_matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
-                             std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
-
-            //-- Show detected matches
-            imshow( "Good Matches & Object detection", img_matches );
-
-            cv::waitKey(0);
+            rg.creation_keypoints_data();
+            rg.creation_descriptors_data();
+            rg.compute_hypothetical_matches();
         }
     }
 
