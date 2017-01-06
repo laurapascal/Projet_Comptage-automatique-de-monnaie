@@ -244,6 +244,9 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
             //            int minHessian = 100000;
             //            cv::SurfFeatureDetector detector( minHessian );
 
+            //ORB
+            //cv::OrbFeatureDetector detector;
+
             std::vector<cv::KeyPoint> keypoints_object, keypoints_scene;
 
             detector.detect( img_extracted_coin, keypoints_object );
@@ -293,9 +296,13 @@ int comparaison(QString repertory_database, QString repertory_extracted_coins)
             // SIFT( int nfeatures=0, int nOctaveLayers=3,double contrastThreshold=0.04, double edgeThreshold=10,double sigma=1.6);
             cv::SiftFeatureDetector detector( 1000, 3, 0.04, 10, 1.0 );
 
+
             // SURF(double hessianThreshold, int nOctaves=4, int nOctaveLayers=2,bool extended=true, bool upright=false);
             //            int minHessian = 100000;
             //            cv::SurfFeatureDetector detector( minHessian );
+
+            // ORB
+            // cv::OrbFeatureDetector detector;
 
             std::vector<cv::KeyPoint> keypoints_object, keypoints_scene;
 
