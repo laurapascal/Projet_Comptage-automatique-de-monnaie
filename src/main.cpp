@@ -222,17 +222,20 @@ int registration_coin(QString repertory_database, QString repertory_extracted_co
     QDir Dir_extracted_coins(repertory_extracted_coins);
     QFileInfoList fileList_extracted_coins;
     fileList_extracted_coins.append(Dir_extracted_coins.entryInfoList());
-    for( int j = 2; j < fileList_extracted_coins.size(); j++)
+    for( int i = 2; i < fileList_extracted_coins.size(); i++)
     {
-        rg.creation_image_extracted_coin(fileList_extracted_coins[j].absoluteFilePath());
-        std::cout<<fileList_extracted_coins[j].absoluteFilePath().toStdString()<<std::endl;
+        rg.creation_image_extracted_coin(fileList_extracted_coins[i].absoluteFilePath());
+        std::cout<<fileList_extracted_coins[i].absoluteFilePath().toStdString()<<std::endl;
 
         rg.creation_keypoints_extracted_coin();
         rg.creation_descriptors_extracted_coin();
 
+
         /// Comparison with our data
         for(std::map<QString,std::string>::iterator it=db.map_data.begin() ; it!=db.map_data.end() ; ++it)
         {
+            float score = 0;
+
             rg.creation_image_data(it->first);
             QString path = it->first;
             std::cout<<path.toStdString()<<std::endl;
@@ -240,6 +243,24 @@ int registration_coin(QString repertory_database, QString repertory_extracted_co
             rg.creation_keypoints_data();
             rg.creation_descriptors_data();
             rg.compute_hypothetical_matches();
+            cv::Mat mask = rg.findTransformation();
+
+            // Compute the score
+            for(int r = 0; r < mask.rows; r++)
+            {
+                for(int c = 0; c < mask.cols; c++)
+                {
+                    if((unsigned int)mask.at<uchar>(r,c) == 1)
+                    {
+                        score += 1;
+                    }
+                }
+
+            }
+
+            // Percentage
+            score = 100*(score / (float)mask.rows);
+            std::cout<<"score: "<<score<<std::endl;
         }
     }
 

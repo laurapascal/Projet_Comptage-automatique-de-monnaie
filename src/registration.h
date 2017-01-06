@@ -48,6 +48,8 @@ public:
     std::vector< cv::DMatch > good_matches;
     void compute_hypothetical_matches();
 
+    cv::Mat findTransformation();
+
 private:
     cv::Mat get_image(QString path);
 

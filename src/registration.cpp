@@ -221,4 +221,28 @@ void registration::affichage_good_matches()
     cv::waitKey(0);
 }
 
+/** ********************************************************************************* **/
+/** ************ Compute the better transformation thanks to RanSaC  **************** **/
+/** ********************************************************************************* **/
+cv::Mat registration::findTransformation()
+{
+    // Get the keypoints from the good matches
+
+    std::vector<cv::Point2f> good_keypoints_extracted_coin;
+    std::vector<cv::Point2f> good_keypoints_data;
+
+    for( unsigned int i = 0; i < good_matches.size(); i++ )
+    {
+        good_keypoints_extracted_coin.push_back( keypoints_extracted_coin[ good_matches[i].queryIdx ].pt );
+        good_keypoints_data.push_back( keypoints_data[ good_matches[i].trainIdx ].pt );
+    }
+
+    // Compute the better transformation
+    cv::Mat mask; // inliers
+    double ransacReprojThreshold = 4.0;
+    cv::Mat H = cv::findHomography( good_keypoints_extracted_coin, good_keypoints_data, CV_RANSAC, ransacReprojThreshold, mask);
+
+    return mask;
+}
+
 
