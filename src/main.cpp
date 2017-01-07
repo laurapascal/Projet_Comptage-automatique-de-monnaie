@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 
     QDir Dir_extracted_coins("output");
     circleDetection detection(argv[1]);
-    detection.detection(false, argv[2],true, Dir_extracted_coins);
+    detection.detection(true, false, argv[2],true, Dir_extracted_coins);
 
     /** ********************************** COMPARAISON ********************************** **/
 

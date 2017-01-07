@@ -29,7 +29,7 @@ public:
     circleDetection(QString path_initial_image_for_detection);
 
     /** detection of circles **/
-    void detection(bool blur, char *methode, bool draw, QDir Dir_extracted_coins);
+    void detection(bool backGroundSeg, bool blur, char *methode, bool draw, QDir Dir_extracted_coins);
 
 private:
     cv::Mat initial_image_for_detection;    // Image in which the coins will be detected
@@ -38,6 +38,7 @@ private:
 
     /** Pre-treatment **/
     void preTreatment(bool blur);
+    void backgroundSegmantation(bool display);
 
     /** Detection with method 1 or method 2 **/
     cv::vector<cv::Vec3f> technique1();

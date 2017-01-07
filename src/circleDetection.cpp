@@ -4,17 +4,65 @@ circleDetection::circleDetection(QString path_initial_image_for_detection)
 {
     initial_image_for_detection = cv::imread( path_initial_image_for_detection.toStdString(), 1 );
     assert(initial_image_for_detection.data);
+    curent_image_for_detection = initial_image_for_detection.clone();
 }
+
+/** ********************************************************************************* **/
+/** ****************************** Pre-treatment  *********************************** **/
+/** ********************************************************************************* **/
 
 void circleDetection::preTreatment(bool blur)
 {
     // Convert it to gray
-    cvtColor( initial_image_for_detection, curent_image_for_detection, CV_BGR2GRAY );
+    cvtColor( curent_image_for_detection, curent_image_for_detection, CV_BGR2GRAY );
 
     // Reduce the noise so we avoid false circle detection
     if(blur)
         GaussianBlur( curent_image_for_detection, curent_image_for_detection, cv::Size(9, 9), 2, 2 );
 }
+
+void circleDetection::backgroundSegmantation(bool display)
+{
+    // define bounding rectangle
+    cv::Rect rectangle(3,3,curent_image_for_detection.cols-6,curent_image_for_detection.rows-6);
+
+    cv::Mat result; // segmentation result (4 possible values)
+    cv::Mat bgModel,fgModel; // the models (internally used)
+
+    // GrabCut segmentation
+    cv::grabCut(curent_image_for_detection,    // input image
+                result,   // segmentation result
+                rectangle,// rectangle containing foreground
+                bgModel,fgModel, // models
+                4,        // number of iterations
+                cv::GC_INIT_WITH_RECT); // use rectangle
+
+    // Get the pixels marked as likely foreground
+    cv::compare(result,cv::GC_PR_FGD,result,cv::CMP_EQ);
+    // Generate output image
+    cv::Mat foreground(curent_image_for_detection.size(),CV_8UC3,cv::Scalar(255,0,255));
+    cv::Mat background(curent_image_for_detection.size(),CV_8UC3,cv::Scalar(255,0,255));
+    curent_image_for_detection.copyTo(background,~result);
+    curent_image_for_detection.copyTo(foreground,result);
+
+    if(display)
+    {
+        //Saving the result for debugging
+        cv::Mat rect = curent_image_for_detection.clone();
+        cv::rectangle(rect, rectangle, cv::Scalar(255,0,0),1);
+        cv::imshow("initial rectangle",rect);
+        cv::imshow("Foreground",foreground);
+        cv::imshow("Background",background);
+    }
+    cv::Mat zero(curent_image_for_detection.size(),CV_8UC3,cv::Scalar(0,0,0));
+    cv::Mat one(curent_image_for_detection.size(),CV_8UC3,cv::Scalar(255,255,255));
+    one.copyTo(zero,result);
+    curent_image_for_detection = zero.clone();
+}
+
+/** ********************************************************************************* **/
+/** ****************** Detection with method 1 or method 2  ************************* **/
+/** ********************************************************************************* **/
 
 cv::vector<cv::Vec3f> circleDetection::technique1()
 {
@@ -32,7 +80,6 @@ cv::vector<cv::Vec3f> circleDetection::technique1()
     // max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
 
     cv::HoughCircles( curent_image_for_detection, circles, CV_HOUGH_GRADIENT, 1, curent_image_for_detection.rows/8, 200, 40, 10, 0);
-    std::cout<<circles.size()<<std::endl;
     return circles;
 }
 
@@ -60,6 +107,11 @@ std::vector<cv::RotatedRect> circleDetection::technique2()
 
     return ellipses;
 }
+
+/** ********************************************************************************* **/
+/** ***************************** Post-treatment  *********************************** **/
+/** ********************************************************************************* **/
+
 
 void circleDetection::post_treatment_technique1(cv::vector<cv::Vec3f> circles)
 {
@@ -147,6 +199,10 @@ void circleDetection::post_treatment_technique2(std::vector<cv::RotatedRect> ell
     }
 }
 
+/** ********************************************************************************* **/
+/** ************************* Exxtraction des pieces  ******************************* **/
+/** ********************************************************************************* **/
+
 void circleDetection::extraction(QDir Dir_extracted_coins)
 {
     // Clearing the output floder
@@ -167,6 +223,10 @@ void circleDetection::extraction(QDir Dir_extracted_coins)
     }
 }
 
+/** ********************************************************************************* **/
+/** ************************** Debug to draw circles  ******************************* **/
+/** ********************************************************************************* **/
+
 void circleDetection::draw_circles()
 {
     cv::Mat im;
@@ -183,8 +243,9 @@ void circleDetection::draw_circles()
     cv::waitKey(0);
 }
 
-void circleDetection::detection(bool blur, char *methode, bool draw, QDir Dir_extracted_coins)
+void circleDetection::detection(bool backGroundSeg, bool blur, char *methode, bool draw, QDir Dir_extracted_coins)
 {
+    backgroundSegmantation(true);
     preTreatment(blur);
     std::string choix(methode);
     if(choix == "methode1")
