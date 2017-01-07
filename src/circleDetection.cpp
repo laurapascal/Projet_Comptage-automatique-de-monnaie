@@ -24,7 +24,9 @@ void circleDetection::preTreatment(bool blur)
 void circleDetection::backgroundSegmantation(bool display)
 {
     // define bounding rectangle
-    cv::Rect rectangle(3,3,curent_image_for_detection.cols-6,curent_image_for_detection.rows-6);
+    int col = curent_image_for_detection.cols;
+    col *= 0.01;
+    cv::Rect rectangle(col,col,curent_image_for_detection.cols-col*2,curent_image_for_detection.rows-col*2);
 
     cv::Mat result; // segmentation result (4 possible values)
     cv::Mat bgModel,fgModel; // the models (internally used)
@@ -34,7 +36,7 @@ void circleDetection::backgroundSegmantation(bool display)
                 result,   // segmentation result
                 rectangle,// rectangle containing foreground
                 bgModel,fgModel, // models
-                4,        // number of iterations
+                2,        // number of iterations
                 cv::GC_INIT_WITH_RECT); // use rectangle
 
     // Get the pixels marked as likely foreground
@@ -88,12 +90,12 @@ std::vector<cv::RotatedRect> circleDetection::technique2()
     cv::Mat threshold_output;
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
-    int thresh = 200;
+    int thresh = 125;
 
     // Detect edges using Threshold
     cv::threshold( curent_image_for_detection, threshold_output, thresh, 255, cv::THRESH_BINARY );
     //Affichage de seuillage pour debug
-    //imshow( "Seuillage", threshold_output );
+    imshow( "Seuillage", threshold_output );
     // Find contours
     cv::findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
 
@@ -245,7 +247,8 @@ void circleDetection::draw_circles()
 
 void circleDetection::detection(bool backGroundSeg, bool blur, char *methode, bool draw, QDir Dir_extracted_coins)
 {
-    backgroundSegmantation(true);
+    if(backGroundSeg)
+        backgroundSegmantation(true);
     preTreatment(blur);
     std::string choix(methode);
     if(choix == "methode1")
