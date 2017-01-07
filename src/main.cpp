@@ -72,6 +72,7 @@ int coin_value_detection(QString repertory_database, QString repertory_extracted
 
             comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1]);
 
+//            float score = cmp.get_templateMatching_score(true);
             float score = cmp.get_inlierScore();
 
             std::cout<<"score: "<<score<<std::endl;

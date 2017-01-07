@@ -27,6 +27,7 @@ public:
     comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param);
 
     float get_inlierScore();
+    float get_templateMatching_score(bool debug);
 
 private:
     cv::Mat img_ectracted_coin;
