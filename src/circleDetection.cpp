@@ -90,7 +90,15 @@ std::vector<cv::RotatedRect> circleDetection::method2()
     cv::Mat threshold_output;
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
-    int thresh = 125;
+    int sum = 0;
+    for(int r = 0; r < curent_image_for_detection.rows; r++)
+    {
+        for(int c = 0; c < curent_image_for_detection.cols; c++)
+        {
+            sum += (unsigned int)curent_image_for_detection.at<uchar>(r,c);
+        }
+    }
+    int thresh = 0.8*(sum / (curent_image_for_detection.rows * curent_image_for_detection.cols));
 
     // Detect edges using Threshold
     cv::threshold( curent_image_for_detection, threshold_output, thresh, 255, cv::THRESH_BINARY );
