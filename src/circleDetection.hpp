@@ -29,7 +29,7 @@ public:
     circleDetection(QString path_initial_image_for_detection);
 
     /** detection of circles **/
-    void detection(bool backGroundSeg, bool blur, char *methode, bool draw, QDir Dir_extracted_coins);
+    void detection(bool backGroundSeg, bool blur, char *method, bool draw, QDir Dir_extracted_coins);
 
 private:
     cv::Mat initial_image_for_detection;    // Image in which the coins will be detected
@@ -41,12 +41,12 @@ private:
     void backgroundSegmantation(bool display);
 
     /** Detection with method 1 or method 2 **/
-    cv::vector<cv::Vec3f> technique1();
-    std::vector<cv::RotatedRect> technique2();
+    cv::vector<cv::Vec3f> method1();
+    std::vector<cv::RotatedRect> method2();
 
     /** Post-treatment **/
-    void post_treatment_technique1(cv::vector<cv::Vec3f> circles);
-    void post_treatment_technique2(std::vector<cv::RotatedRect> ellipses);
+    void post_treatment_method1(cv::vector<cv::Vec3f> circles);
+    void post_treatment_method2(std::vector<cv::RotatedRect> ellipses);
 
     /** Coin Extraction **/
     void extraction(QDir Dir_extracted_coins);

@@ -66,7 +66,7 @@ void circleDetection::backgroundSegmantation(bool display)
 /** ****************** Detection with method 1 or method 2  ************************* **/
 /** ********************************************************************************* **/
 
-cv::vector<cv::Vec3f> circleDetection::technique1()
+cv::vector<cv::Vec3f> circleDetection::method1()
 {
     cv::vector<cv::Vec3f> circles;
 
@@ -85,7 +85,7 @@ cv::vector<cv::Vec3f> circleDetection::technique1()
     return circles;
 }
 
-std::vector<cv::RotatedRect> circleDetection::technique2()
+std::vector<cv::RotatedRect> circleDetection::method2()
 {
     cv::Mat threshold_output;
     std::vector<std::vector<cv::Point> > contours;
@@ -115,7 +115,7 @@ std::vector<cv::RotatedRect> circleDetection::technique2()
 /** ********************************************************************************* **/
 
 
-void circleDetection::post_treatment_technique1(cv::vector<cv::Vec3f> circles)
+void circleDetection::post_treatment_method1(cv::vector<cv::Vec3f> circles)
 {
     /// Treatement of the found circles
     for( size_t i = 0; i < circles.size(); i++ )
@@ -147,7 +147,7 @@ void circleDetection::post_treatment_technique1(cv::vector<cv::Vec3f> circles)
     }
 }
 
-void circleDetection::post_treatment_technique2(std::vector<cv::RotatedRect> ellipses)
+void circleDetection::post_treatment_method2(std::vector<cv::RotatedRect> ellipses)
 {
     /// Treatment on the found ellipses to keep only the circle and the bigger ellipses
     // IF the ellipse is not a circle THEN the ellipse is deleted
@@ -245,23 +245,27 @@ void circleDetection::draw_circles()
     cv::waitKey(0);
 }
 
-void circleDetection::detection(bool backGroundSeg, bool blur, char *methode, bool draw, QDir Dir_extracted_coins)
+/** ********************************************************************************* **/
+/** ***************************** General Function  ********************************* **/
+/** ********************************************************************************* **/
+
+void circleDetection::detection(bool backGroundSeg, bool blur, char *method, bool draw, QDir Dir_extracted_coins)
 {
     if(backGroundSeg)
         backgroundSegmantation(true);
     preTreatment(blur);
-    std::string choix(methode);
-    if(choix == "methode1")
+    std::string choix(method);
+    if(choix == "method1")
     {
         cv::vector<cv::Vec3f> circles;
-        circles = technique1();
-        post_treatment_technique1(circles);
+        circles = method1();
+        post_treatment_method1(circles);
     }
-    else if(choix == "methode2")
+    else if(choix == "method2")
     {
         std::vector<cv::RotatedRect> ellipses;
-        ellipses = technique2();
-        post_treatment_technique2(ellipses);
+        ellipses = method2();
+        post_treatment_method2(ellipses);
     }
     if(draw)
         draw_circles();

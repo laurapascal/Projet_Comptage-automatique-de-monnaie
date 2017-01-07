@@ -1,4 +1,4 @@
-#include "registration.h"
+#include "registration.hpp"
 
 registration::registration(char* method_keypoint_descriptor_param, char* method_matches_param)
 :method_keypoint_descriptor(method_keypoint_descriptor_param),method_matches(method_matches_param)
@@ -224,7 +224,7 @@ void registration::affichage_good_matches()
 /** ********************************************************************************* **/
 /** ************ Compute the better transformation thanks to RanSaC  **************** **/
 /** ********************************************************************************* **/
-cv::Mat registration::findTransformation()
+std::vector<cv::Mat> registration::findTransformation()
 {
     // Get the keypoints from the good matches
 
@@ -242,7 +242,11 @@ cv::Mat registration::findTransformation()
     double ransacReprojThreshold = 4.0;
     cv::Mat H = cv::findHomography( good_keypoints_extracted_coin, good_keypoints_data, CV_RANSAC, ransacReprojThreshold, mask);
 
-    return mask;
+    std::vector<cv::Mat> result;
+
+    result.push_back(H);
+    result.push_back(mask);
+    return result;
 }
 
 

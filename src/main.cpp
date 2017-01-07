@@ -15,9 +15,11 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/nonfree/nonfree.hpp"
 #include "opencv2/nonfree/features2d.hpp"
-#include "database.h"
-#include "registration.h"
+#include "database.hpp"
+#include "registration.hpp"
 #include "circleDetection.hpp"
+#include "comparison.hpp"
+
 
 int coin_value_detection(QString repertory_database, QString repertory_extracted_coins);
 
@@ -27,7 +29,7 @@ int main(int argc, char** argv)
 
     QDir Dir_extracted_coins("output");
     circleDetection detection(argv[1]);
-    detection.detection(false, false, argv[2],true, Dir_extracted_coins);
+    detection.detection(false, true, argv[2],true, Dir_extracted_coins);
 
     /** ********************************** REGISTRATION ********************************** **/
 
@@ -58,8 +60,6 @@ int coin_value_detection(QString repertory_database, QString repertory_extracted
         /// Comparison with our data
         for(std::map<QString,std::string>::iterator it=db.map_data.begin() ; it!=db.map_data.end() ; ++it)
         {
-            float score = 0;
-
             rg.creation_image_data(it->first);
             QString path = it->first;
             std::cout<<path.toStdString()<<std::endl;
@@ -67,23 +67,13 @@ int coin_value_detection(QString repertory_database, QString repertory_extracted
             rg.creation_keypoints_data();
             rg.creation_descriptors_data();
             rg.compute_hypothetical_matches();
-            cv::Mat mask = rg.findTransformation();
 
-            // Compute the score
-            for(int r = 0; r < mask.rows; r++)
-            {
-                for(int c = 0; c < mask.cols; c++)
-                {
-                    if((unsigned int)mask.at<uchar>(r,c) == 1)
-                    {
-                        score += 1;
-                    }
-                }
+            std::vector<cv::Mat> registrationResult = rg.findTransformation(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
 
-            }
+            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1]);
 
-            // Percentage
-            score = 100*(score / (float)mask.rows);
+            float score = cmp.get_inlierScore();
+
             std::cout<<"score: "<<score<<std::endl;
         }
     }

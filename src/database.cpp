@@ -1,4 +1,4 @@
-#include "database.h"
+#include "database.hpp"
 
 database::database(QString path_database_param)
 :path_database(path_database_param)
