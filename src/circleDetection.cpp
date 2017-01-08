@@ -257,20 +257,21 @@ void circleDetection::draw_circles()
 /** ***************************** General Function  ********************************* **/
 /** ********************************************************************************* **/
 
-void circleDetection::detection(bool backGroundSeg, bool blur, char *method, bool draw, QDir Dir_extracted_coins)
+void circleDetection::detection(bool backGroundSeg, char *method, bool draw, QDir Dir_extracted_coins)
 {
     if(backGroundSeg)
-        backgroundSegmantation(true);
-    preTreatment(blur);
+            backgroundSegmantation(true);
     std::string choix(method);
     if(choix == "method1")
     {
+        preTreatment(false);
         cv::vector<cv::Vec3f> circles;
         circles = method1();
         post_treatment_method1(circles);
     }
     else if(choix == "method2")
     {
+        preTreatment(true);
         std::vector<cv::RotatedRect> ellipses;
         ellipses = method2();
         post_treatment_method2(ellipses);
