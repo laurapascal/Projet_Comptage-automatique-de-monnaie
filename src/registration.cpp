@@ -71,8 +71,12 @@ std::vector<cv::KeyPoint> registration::get_keypoints_Surf(cv::Mat img)
 {
     std::vector<cv::KeyPoint> keypoints;
 
-    int minHessian = 100000;
-    cv::SurfFeatureDetector detector(minHessian);
+    int minHessian = 300;
+    int nOctaves = 4;
+    int nOctaveLayers = 2;
+    bool extended = true;
+    bool upright = false;
+    cv::SurfFeatureDetector detector(minHessian, nOctaves, nOctaveLayers, extended, upright);
 
     detector.detect(img, keypoints);
 
