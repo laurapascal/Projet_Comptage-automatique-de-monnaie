@@ -27,7 +27,7 @@ float comparison::get_inlierScore()
     }
 
     // Percentage
-//    score = 100*(score / (float)mask.rows);
+    score = 100*(score / (float)mask.rows);
     return score;
 }
 
