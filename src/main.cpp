@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 int coin_value_detection(QString repertory_database, QString repertory_extracted_coins)
 {
     database db(repertory_database);
-    registration rg("sift","flann");
+    registration rg("orb","BF");
     QDir Dir_extracted_coins(repertory_extracted_coins);
     QFileInfoList fileList_extracted_coins;
     fileList_extracted_coins.append(Dir_extracted_coins.entryInfoList());

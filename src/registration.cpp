@@ -35,6 +35,8 @@ void registration::creation_keypoints_extracted_coin()
         keypoints = get_keypoints_Sift(img_ectracted_coin);
     else if( method_keypoint_descriptor == "surf" )
         keypoints = get_keypoints_Surf(img_ectracted_coin);
+    else if( method_keypoint_descriptor == "orb" )
+        keypoints = get_keypoints_ORB(img_ectracted_coin);
 
     keypoints_extracted_coin = keypoints;
 }
@@ -46,6 +48,8 @@ void registration::creation_keypoints_data()
        keypoints =  get_keypoints_Sift(img_data);
     else if( method_keypoint_descriptor == "surf" )
         keypoints = get_keypoints_Surf(img_data);
+    else if( method_keypoint_descriptor == "orb" )
+        keypoints = get_keypoints_ORB(img_data);
 
     keypoints_data = keypoints;
 }
@@ -83,6 +87,25 @@ std::vector<cv::KeyPoint> registration::get_keypoints_Surf(cv::Mat img)
     return keypoints;
 }
 
+std::vector<cv::KeyPoint> registration::get_keypoints_ORB(cv::Mat img)
+{
+    std::vector<cv::KeyPoint> keypoints;
+
+    int nfeatures = 4000;
+    float scaleFactor = 1.2f;
+    int nlevels = 8;
+    int edgeThreshold = 31;
+    int firstLevel = 0;
+    int WTA_K = 4;
+    int scoreType = cv::ORB::HARRIS_SCORE;
+    int patchSize = 50;
+    cv::OrbFeatureDetector detector(nfeatures, scaleFactor, nlevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize);
+
+    detector.detect(img, keypoints);
+
+    return keypoints;
+}
+
 /** ********************************************************************************* **/
 /** *************************** Creation of the descriptors ************************* **/
 /** ********************************************************************************* **/
@@ -94,6 +117,8 @@ void registration::creation_descriptors_extracted_coin()
         descriptors = get_descriptors_Sift(img_ectracted_coin, keypoints_extracted_coin);
     else if( method_keypoint_descriptor == "surf" )
         descriptors = get_descriptors_Surf(img_ectracted_coin, keypoints_extracted_coin);
+    else if( method_keypoint_descriptor == "orb" )
+        descriptors = get_descriptors_ORB(img_ectracted_coin, keypoints_extracted_coin);
 
      descriptors_extracted_coin = descriptors;
 }
@@ -105,6 +130,8 @@ void registration::creation_descriptors_data()
        descriptors =  get_descriptors_Sift(img_data, keypoints_data);
     else if( method_keypoint_descriptor == "surf" )
         descriptors = get_descriptors_Surf(img_data, keypoints_data);
+    else if( method_keypoint_descriptor == "orb" )
+        descriptors = get_descriptors_ORB(img_data, keypoints_data);
 
     descriptors_data = descriptors;
 }
@@ -133,6 +160,18 @@ cv::Mat registration::get_descriptors_Surf(cv::Mat img, std::vector<cv::KeyPoint
     return descriptors;
 }
 
+cv::Mat registration::get_descriptors_ORB(cv::Mat img, std::vector<cv::KeyPoint> keypoints)
+{
+    cv::Mat descriptors;
+
+    // Calculate descriptors (feature vectors)
+    cv::OrbDescriptorExtractor extractor;
+
+    extractor.compute( img, keypoints, descriptors);
+
+    return descriptors;
+}
+
 /** ********************************************************************************* **/
 /** ******************************* Compute matches  ******************************** **/
 /** ********************************************************************************* **/
@@ -141,7 +180,7 @@ void registration::compute_matches()
 {
     if( method_matches == "flann")
         matches = get_matches_FLANN();
-    else
+    else if( method_matches == "BF" )
         matches = get_matches_BF();
 }
 
@@ -159,7 +198,7 @@ std::vector<cv::DMatch> registration::get_matches_FLANN()
 std::vector<cv::DMatch> registration::get_matches_BF()
 {
     // Matching descriptor vectors using Brut Force matcher
-    cv::BFMatcher matcher(cv::NORM_L2);
+    cv::BFMatcher matcher(cv::NORM_HAMMING2 );
 
     std::vector< cv::DMatch > matches;
     matcher.match( descriptors_extracted_coin, descriptors_data, matches );
@@ -280,8 +319,8 @@ void registration::display_inliers()
     cv::waitKey(0);
 
     // Apply Homography found
+    std::cout<<"Transformation: "<<H<<std::endl;
     cv::Mat img_H;
-    std::cout<<"homography: ["<<H.rows<<","<<H.cols<<"]"<<std::endl;
     cv::warpPerspective(img_ectracted_coin, img_H, H, img_data.size());
 
     imshow( "Apply H on the image", img_H );

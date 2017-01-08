@@ -57,9 +57,12 @@ private:
 
     std::vector<cv::KeyPoint> get_keypoints_Sift(cv::Mat img);
     std::vector<cv::KeyPoint> get_keypoints_Surf(cv::Mat img);
+    std::vector<cv::KeyPoint> get_keypoints_ORB(cv::Mat img);
+
 
     cv::Mat get_descriptors_Sift(cv::Mat img, std::vector<cv::KeyPoint> keypoints);
     cv::Mat get_descriptors_Surf(cv::Mat img, std::vector<cv::KeyPoint> keypoints);
+    cv::Mat get_descriptors_ORB(cv::Mat img, std::vector<cv::KeyPoint> keypoints);
 
     std::vector<cv::DMatch> get_matches_FLANN();
     std::vector<cv::DMatch> get_matches_BF();
