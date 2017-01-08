@@ -34,6 +34,8 @@ public:
     void creation_image_extracted_coin(QString path);
     void creation_image_data(QString path);
 
+    void preTreatment_images();
+
     std::vector<cv::KeyPoint> keypoints_extracted_coin;
     std::vector<cv::KeyPoint> keypoints_data;
     void creation_keypoints_extracted_coin();

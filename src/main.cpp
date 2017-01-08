@@ -61,6 +61,7 @@ int coin_value_detection(QString repertory_database, QString repertory_extracted
         for(std::map<QString,std::string>::iterator it=db.map_data.begin() ; it!=db.map_data.end() ; ++it)
         {
             rg.creation_image_data(it->first);
+            rg.preTreatment_images();
             QString path = it->first;
             std::cout<<path.toStdString()<<std::endl;
 

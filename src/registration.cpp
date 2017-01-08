@@ -26,6 +26,60 @@ cv::Mat registration::get_image(QString path)
 }
 
 /** ********************************************************************************* **/
+/** ***************************** Pre Treatment of images *************************** **/
+/** ********************************************************************************* **/
+
+void registration::preTreatment_images()
+{
+    cv::Mat mean_ectracted_coin;
+    cv::Mat stddev_ectracted_coin;
+    cv::meanStdDev(img_ectracted_coin, mean_ectracted_coin, stddev_ectracted_coin);
+    std::cout<<mean_ectracted_coin.rows <<std::endl;
+
+    for(int r = 0; r < mean_ectracted_coin.rows; r++ )
+    {
+        for(int l = 0; l < mean_ectracted_coin.cols; l++ )
+        {
+            std::cout<<"before: "<<(unsigned int)mean_ectracted_coin.at<uchar>(r,l)<<std::endl;
+
+            mean_ectracted_coin.at<uchar>(r,l) = mean_ectracted_coin.at<uchar>(r,l) + 125;
+            std::cout<<"after: "<<(unsigned int)mean_ectracted_coin.at<uchar>(r,l)<<std::endl;
+        }
+    }
+    for(int r = 0; r < 10; r++ )
+    {
+        for(int l = 0; l < 10; l++ )
+        {
+            std::cout<<"before: "<<(unsigned int)img_ectracted_coin.at<uchar>(r,l)<<std::endl;
+        }
+    }
+    img_ectracted_coin = (img_ectracted_coin - mean_ectracted_coin) ;
+
+    for(int r = 0; r < 10; r++ )
+    {
+        for(int l = 0; l < 10; l++ )
+        {
+            std::cout<<"after: "<<(unsigned int)img_ectracted_coin.at<uchar>(r,l)<<std::endl;
+        }
+    }
+
+    cv::Mat mean_data;
+    mean_data.create(img_data.rows, img_data.cols, img_data.type());
+    cv::Mat stddev_data;
+    stddev_data.create(img_data.rows, img_data.cols, img_data.type());
+    cv::meanStdDev(img_data, mean_data, stddev_data);
+    img_data = (img_data - mean_data) ;
+
+    imshow( "Img extrated coin normalized", img_ectracted_coin );
+    cv::waitKey(0);
+
+    imshow( "Img data normalized", img_data );
+    cv::waitKey(0);
+
+
+}
+
+/** ********************************************************************************* **/
 /** **************************** Creation of the keypoints ************************** **/
 /** ********************************************************************************* **/
 void registration::creation_keypoints_extracted_coin()
