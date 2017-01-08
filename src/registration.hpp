@@ -52,6 +52,8 @@ public:
     cv::Mat H; // homography
     std::vector<cv::Mat> findTransformation();
 
+    float get_inlier_repartition();
+
 private:
     cv::Mat get_image(QString path);
 
