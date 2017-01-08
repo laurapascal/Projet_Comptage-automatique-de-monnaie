@@ -48,6 +48,8 @@ public:
     std::vector< cv::DMatch > good_matches;
     void compute_hypothetical_matches();
 
+    cv::Mat mask; // inliers
+    cv::Mat H; // homography
     std::vector<cv::Mat> findTransformation();
 
 private:
@@ -65,7 +67,8 @@ private:
     void compute_matches();
     void compute_good_matches();
 
-    void affichage_good_matches();
+    void display_good_matches();
+    void display_inliers();
 };
 
 #endif // REGISTRATION_H

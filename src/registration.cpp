@@ -196,13 +196,13 @@ void registration::compute_hypothetical_matches()
 {
     compute_matches();
     compute_good_matches();
-//    affichage_good_matches();
+    display_good_matches();
 }
 
 /** ********************************************************************************* **/
-/** ********************** Debug: Affichage des good matches  *********************** **/
+/** ********************** Debug: Display of good matches  *********************** **/
 /** ********************************************************************************* **/
-void registration::affichage_good_matches()
+void registration::display_good_matches()
 {
     std::cout<<"keypoints extracted coin: "<<keypoints_extracted_coin.size()<<std::endl;
     std::cout<<"descriptors extracted coin: "<<descriptors_extracted_coin.size()<<std::endl;
@@ -238,9 +238,11 @@ std::vector<cv::Mat> registration::findTransformation()
     }
 
     // Compute the better transformation
-    cv::Mat mask; // inliers
-    double ransacReprojThreshold = 4.0;
-    cv::Mat H = cv::findHomography( good_keypoints_extracted_coin, good_keypoints_data, CV_RANSAC, ransacReprojThreshold, mask);
+    double ransacReprojThreshold = 3.0;
+    H = cv::findHomography( good_keypoints_extracted_coin, good_keypoints_data, CV_RANSAC, ransacReprojThreshold, mask);
+
+    // Debug
+    display_inliers();
 
     std::vector<cv::Mat> result;
 
@@ -249,4 +251,37 @@ std::vector<cv::Mat> registration::findTransformation()
     return result;
 }
 
+/** ********************************************************************************* **/
+/** *************************** Debug: Display of inliers  ************************** **/
+/** ********************************************************************************* **/
+void registration::display_inliers()
+{
+    // Display of inliers
+    std::vector< cv::DMatch > inliers;
+    for(int r = 0; r < mask.rows; r++)
+    {
+        if((unsigned int)mask.at<uchar>(r,0) == 1)
+        {
+            inliers.push_back(good_matches[r]);
+        }
+    }
 
+    cv::Mat img_inliers;
+    cv::drawMatches( img_ectracted_coin, keypoints_extracted_coin, img_data, keypoints_data,
+                     inliers, img_inliers, cv::Scalar::all(-1), cv::Scalar::all(-1),
+                     std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
+
+    //-- Show detected matches
+    imshow( "Inliers", img_inliers );
+    cv::waitKey(0);
+
+    // Apply Homography found
+    cv::Mat img_H;
+    std::cout<<"homography: ["<<H.rows<<","<<H.cols<<"]"<<std::endl;
+    cv::warpPerspective(img_ectracted_coin, img_H, H, img_data.size());
+
+    imshow( "Apply H on the image", img_H );
+    cv::waitKey(0);
+
+
+}
