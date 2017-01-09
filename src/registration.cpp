@@ -1,7 +1,7 @@
 #include "registration.hpp"
 
 registration::registration(char* method_keypoint_descriptor_param, char* method_matches_param)
-:method_keypoint_descriptor(method_keypoint_descriptor_param),method_matches(method_matches_param)
+    :method_keypoint_descriptor(method_keypoint_descriptor_param),method_matches(method_matches_param)
 {
 
 }
@@ -45,7 +45,7 @@ void registration::creation_keypoints_data()
 {
     std::vector<cv::KeyPoint> keypoints;
     if( method_keypoint_descriptor == "sift" )
-       keypoints =  get_keypoints_Sift(img_data);
+        keypoints =  get_keypoints_Sift(img_data);
     else if( method_keypoint_descriptor == "surf" )
         keypoints = get_keypoints_Surf(img_data);
     else if( method_keypoint_descriptor == "orb" )
@@ -120,14 +120,14 @@ void registration::creation_descriptors_extracted_coin()
     else if( method_keypoint_descriptor == "orb" )
         descriptors = get_descriptors_ORB(img_ectracted_coin, keypoints_extracted_coin);
 
-     descriptors_extracted_coin = descriptors;
+    descriptors_extracted_coin = descriptors;
 }
 
 void registration::creation_descriptors_data()
 {
     cv::Mat descriptors;
     if( method_keypoint_descriptor == "sift" )
-       descriptors =  get_descriptors_Sift(img_data, keypoints_data);
+        descriptors =  get_descriptors_Sift(img_data, keypoints_data);
     else if( method_keypoint_descriptor == "surf" )
         descriptors = get_descriptors_Surf(img_data, keypoints_data);
     else if( method_keypoint_descriptor == "orb" )
@@ -286,6 +286,9 @@ std::vector<cv::Mat> registration::findTransformation()
 
     // Debug
     display_inliers();
+    float inlierRepartition = get_inlier_repartition();
+
+    std::cout<<"Inlier repartition:"<<inlierRepartition<<std::endl;
 
     std::vector<cv::Mat> result;
 
@@ -306,6 +309,7 @@ void registration::display_inliers()
         if((unsigned int)mask.at<uchar>(r,0) == 1)
         {
             inliers.push_back(good_matches[r]);
+
         }
     }
 
@@ -327,4 +331,40 @@ void registration::display_inliers()
     cv::waitKey(0);
 
 
+}
+
+/** ********************************************************************************* **/
+/** *************************** Cheking inlier repatition  ************************** **/
+/** ********************************************************************************* **/
+float registration::get_inlier_repartition()
+{
+    cv::Mat repartitionImage(img_ectracted_coin.rows, img_ectracted_coin.cols, CV_8UC1,  cv::Scalar(0));
+    for(int r = 0; r < mask.rows; r++)
+    {
+        if((unsigned int)mask.at<uchar>(r,0) == 1)
+        {
+            cv::Point point= keypoints_extracted_coin[ good_matches[r].queryIdx ].pt;
+            repartitionImage.at<uchar>(point.x,point.y) = 255;
+        }
+    }
+    cv::dilate(repartitionImage, repartitionImage, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(30, 30)));
+
+    imshow( "Inlier repartition", repartitionImage );
+    cv::waitKey(0);
+
+    float score = 0;
+
+    for(int r = 0; r < img_ectracted_coin.rows; r++ )
+    {
+        for(int l = 0; l < img_ectracted_coin.cols; l++ )
+        {
+            if( repartitionImage.at<uchar>(r,l) == 255)
+            {
+                score += 1;
+            }
+        }
+    }
+
+    score /= (img_ectracted_coin.rows*img_ectracted_coin.cols);
+    return score;
 }
