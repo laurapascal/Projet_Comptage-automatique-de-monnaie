@@ -344,7 +344,7 @@ float registration::get_inlier_repartition()
         if((unsigned int)mask.at<uchar>(r,0) == 1)
         {
             cv::Point point= keypoints_extracted_coin[ good_matches[r].queryIdx ].pt;
-            repartitionImage.at<uchar>(point.x,point.y) = 255;
+            repartitionImage.at<uchar>(point.y,point.x) = 255;
         }
     }
     cv::dilate(repartitionImage, repartitionImage, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(30, 30)));
