@@ -26,7 +26,9 @@ class comparison
 public:
     comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param);
 
+    /** Compute score equal to the number of inliers found **/
     float get_inlierScore();
+    /** Compute the ponderation **/
     float get_templateMatching_score(bool debug);
 
 private:

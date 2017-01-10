@@ -1,7 +1,7 @@
 #include "registration.hpp"
 
-registration::registration(char* method_keypoint_descriptor_param, char* method_matches_param)
-    :method_keypoint_descriptor(method_keypoint_descriptor_param),method_matches(method_matches_param)
+registration::registration(std::string method_keypoint_descriptor_param, std::string method_matches_param, bool debug_param)
+    :method_keypoint_descriptor(method_keypoint_descriptor_param),method_matches(method_matches_param), debug(debug_param)
 {
 
 }
@@ -198,7 +198,12 @@ std::vector<cv::DMatch> registration::get_matches_FLANN()
 std::vector<cv::DMatch> registration::get_matches_BF()
 {
     // Matching descriptor vectors using Brut Force matcher
-    cv::BFMatcher matcher(cv::NORM_HAMMING2 );
+    int normType;
+    if(method_keypoint_descriptor == "surf" || method_keypoint_descriptor == "sift")
+        normType = cv::NORM_L2;
+    else // orb
+        normType = cv::NORM_HAMMING2;
+    cv::BFMatcher matcher(normType, true);
 
     std::vector< cv::DMatch > matches;
     matcher.match( descriptors_extracted_coin, descriptors_data, matches );
@@ -241,9 +246,12 @@ void registration::compute_hypothetical_matches()
     compute_good_matches();
 
     // Debug
-    display_features();
-    display_information();
-    display_good_matches();
+    if(debug)
+    {
+        display_features();
+        display_information();
+        display_good_matches();
+    }
 }
 
 /** ********************************************************************************* **/

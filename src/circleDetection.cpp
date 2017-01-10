@@ -1,6 +1,7 @@
 #include "circleDetection.hpp"
 
-circleDetection::circleDetection(QString path_initial_image_for_detection)
+circleDetection::circleDetection(QString path_initial_image_for_detection, bool debug_param)
+    :debug(debug_param)
 {
     initial_image_for_detection = cv::imread( path_initial_image_for_detection.toStdString(), 1 );
     assert(initial_image_for_detection.data);
@@ -102,8 +103,12 @@ std::vector<cv::RotatedRect> circleDetection::method2()
 
     // Detect edges using Threshold
     cv::threshold( curent_image_for_detection, threshold_output, thresh, 255, cv::THRESH_BINARY );
-    //Affichage de seuillage pour debug
-    imshow( "Seuillage", threshold_output );
+
+    //Display of Thresholding for debug
+    if(debug)
+    {
+        imshow( "Thresholding before applying the 2nd circles detection method", threshold_output );
+    }
     // Find contours
     cv::findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
 
@@ -257,26 +262,25 @@ void circleDetection::draw_circles()
 /** ***************************** General Function  ********************************* **/
 /** ********************************************************************************* **/
 
-void circleDetection::detection(bool backGroundSeg, char *method, bool draw, QDir Dir_extracted_coins)
+void circleDetection::detection(bool backGroundSeg, int method, QDir Dir_extracted_coins)
 {
     if(backGroundSeg)
             backgroundSegmantation(true);
-    std::string choix(method);
-    if(choix == "method1")
+    if(method == 1)
     {
         preTreatment(false);
         cv::vector<cv::Vec3f> circles;
         circles = method1();
         post_treatment_method1(circles);
     }
-    else if(choix == "method2")
+    else if(method == 2)
     {
         preTreatment(true);
         std::vector<cv::RotatedRect> ellipses;
         ellipses = method2();
         post_treatment_method2(ellipses);
     }
-    if(draw)
+    if(debug)
         draw_circles();
     extraction(Dir_extracted_coins);
 }

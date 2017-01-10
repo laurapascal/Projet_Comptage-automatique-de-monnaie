@@ -24,10 +24,11 @@
 class registration
 {
 public:
-    registration(char* method_keypoint_param, char* method_matches_param);
+    registration(std::string method_keypoint_param, std::string method_matches_param, bool debug_param);
 
     std::string method_keypoint_descriptor;
     std::string method_matches;
+    bool debug;
 
     cv::Mat img_ectracted_coin;
     cv::Mat img_data;
