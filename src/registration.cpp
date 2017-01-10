@@ -22,7 +22,7 @@ void registration::creation_image_data(QString path)
 
 cv::Mat registration::get_image(QString path)
 {
-    return cv::imread( path.toStdString(), CV_LOAD_IMAGE_GRAYSCALE );
+    return cv::imread( path.toStdString() );
 }
 
 /** ********************************************************************************* **/
