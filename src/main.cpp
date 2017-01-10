@@ -25,6 +25,7 @@ QString database_folder_path = "Test_DataBase";
 QString extracted_coin_folder_path = "output";
 std::string algorithm_features_detection = "sift";
 std::string algorithm_matcher = "BF";
+int score_method = 1;
 bool debug = false;
 
 int coin_value_detection();
@@ -102,6 +103,15 @@ int main(int argc, char** argv)
             else if(!strcmp(argv[i + 1], "false"))
                 debug = false;
         }
+        else if(!strcmp(argv[i],"--score"))
+        {
+            if(std::atoi(argv[i + 1]) != 1 && std::atoi(argv[i + 1]) != 2)
+            {
+                usage_executable(argv); exit(0);
+            }
+            else
+                score_method = std::atoi(argv[i + 1]);
+        }
         else
         {
             usage_executable(argv); exit(0);
@@ -137,10 +147,15 @@ void usage_executable(char **argv)
     std::cout<<"Usage: "<<argv[0]<<" std::string> image path"<<std::endl;
     std::cout<<"Option:"<<std::endl;
     std::cout<<"\t--database: <std::string> database folder path"<<std::endl;
-    std::cout<<"\t--detection: <int> detection method number -> choice between 1 and 2"<<std::endl;
-    std::cout<<"\t--features_detection: <std::string> features detection algorithm -> choice between 'sift' ,'surf' and 'orb'"<<std::endl;
-    std::cout<<"\t--matcher: <std::string> matcher algorithm -> choice between 'flann' and 'BF'"<<std::endl;
-    std::cout<<"\t--debug: <std::string> display debug images -> choice between 'true' and 'false'"<<std::endl;
+    std::cout<<"\t--detection: <int> detection method number: 1 or 2"<<std::endl;
+    std::cout<<"\t--features_detection: <std::string> features detection algorithm: 'sift' ,'surf' or 'orb'"<<std::endl;
+    std::cout<<"\t--matcher: <std::string> matcher algorithm: 'flann' or 'BF'"<<std::endl;
+    std::cout<<"\t--debug: <std::string> display debug images: 'true' or 'false'"<<std::endl;
+    std::cout<<"\t--score: <int> score computing method: 1 or 2"<<std::endl;
+    std::cout<<"\t\t 1: compute the score with the number of inliers found"<<std::endl;
+    std::cout<<"\t\t 2: add of a weighting compute with the repartition of the inliers found"<<std::endl;
+    std::cout<<"\nOption Values by default: --database Test_DataBase --detection 1 --features_detection sift --matcher BF --debug false --score 1"<<std::endl;
+
 }
 
 int coin_value_detection()
@@ -181,10 +196,9 @@ int coin_value_detection()
 
             std::vector<cv::Mat> registrationResult = rg.findTransformation(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
 
-            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1]);
+            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], debug);
 
-            float score_temp = cmp.get_inlierScore();
-//            float score = cmp.get_templateMatching_score(true);
+            float score_temp = cmp.compute_score(score_method, rg.keypoints_extracted_coin, rg.good_matches);
 
             if(score < score_temp)
             {

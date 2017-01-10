@@ -1,7 +1,7 @@
 #include "comparison.hpp"
 
-comparison::comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param)
-    :homographie(homographie_param), mask(mask_param)
+comparison::comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, bool debug_param)
+    :homographie(homographie_param), mask(mask_param), debug(debug_param)
 {
     img_ectracted_coin = cv::imread( img_ectracted_coin_path.toStdString(), 1 );
     assert(img_ectracted_coin.data);
@@ -9,6 +9,19 @@ comparison::comparison(QString img_ectracted_coin_path, QString img_data_path, c
     assert(img_data.data);
 }
 
+float comparison::compute_score(int method, std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches)
+{
+    if(method == 1)
+        return get_inlierScore();
+    else if(method == 2)
+        return get_inlierScore()*get_inlier_repartition(keypoints, matches);
+    else // 3
+        return get_templateMatching_score();
+}
+
+/** ********************************************************************************* **/
+/** ************ Compute the score with the number of inliers found  **************** **/
+/** ********************************************************************************* **/
 float comparison::get_inlierScore()
 {
     float score = 0;
@@ -28,7 +41,50 @@ float comparison::get_inlierScore()
     return score;
 }
 
-float comparison::get_templateMatching_score(bool debug)
+/** ********************************************************************************* **/
+/** *************************** Cheking inlier repatition  ************************** **/
+/** ********************************************************************************* **/
+float comparison::get_inlier_repartition(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches)
+{
+    cv::Mat repartitionImage(img_ectracted_coin.rows, img_ectracted_coin.cols, CV_8UC1,  cv::Scalar(0));
+    for(int r = 0; r < mask.rows; r++)
+    {
+        if((unsigned int)mask.at<uchar>(r,0) == 1)
+        {
+            cv::Point point= keypoints[ matches[r].queryIdx ].pt;
+            repartitionImage.at<uchar>(point.y,point.x) = 255;
+        }
+    }
+    cv::dilate(repartitionImage, repartitionImage, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(30, 30)));
+
+    if(debug)
+    {
+        imshow( "Inlier repartition", repartitionImage );
+        cv::waitKey(0);
+    }
+
+    float weighting = 0;
+
+    for(int r = 0; r < img_ectracted_coin.rows; r++ )
+    {
+        for(int l = 0; l < img_ectracted_coin.cols; l++ )
+        {
+            if( repartitionImage.at<uchar>(r,l) == 255)
+            {
+                weighting += 1;
+            }
+        }
+    }
+
+    weighting /= (img_ectracted_coin.rows*img_ectracted_coin.cols);
+    return weighting;
+}
+
+
+/** ********************************************************************************* **/
+/** ***************** Compute score thanks to template matching ********************* **/
+/** ********************************************************************************* **/
+float comparison::get_templateMatching_score()
 {
     /// Source image to display
     cv::Mat img_display;

@@ -28,7 +28,6 @@ public:
 
     std::string method_keypoint_descriptor;
     std::string method_matches;
-    bool debug;
 
     cv::Mat img_ectracted_coin;
     cv::Mat img_data;
@@ -53,9 +52,9 @@ public:
     cv::Mat H; // homography
     std::vector<cv::Mat> findTransformation();
 
-    float get_inlier_repartition();
-
 private:
+    bool debug;
+
     cv::Mat get_image(QString path);
 
     std::vector<cv::KeyPoint> get_keypoints_Sift(cv::Mat img);

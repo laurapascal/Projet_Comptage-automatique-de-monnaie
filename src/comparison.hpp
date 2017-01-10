@@ -24,18 +24,25 @@
 class comparison
 {
 public:
-    comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param);
+    comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, bool debug_param);
 
-    /** Compute score equal to the number of inliers found **/
-    float get_inlierScore();
-    /** Compute the ponderation **/
-    float get_templateMatching_score(bool debug);
+    float compute_score(int method, std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches);
 
 private:
     cv::Mat img_ectracted_coin;
     cv::Mat img_data;
     cv::Mat homographie;
     cv::Mat mask;
+    bool debug;
+
+    /** Compute score equal to the number of inliers found **/
+    float get_inlierScore();
+
+    /** Compute a weighting thank to the repartition of the inliers in the image **/
+    float get_inlier_repartition(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches);
+
+    /** Compute score thanks to template matching  **/
+    float get_templateMatching_score();
 
 };
 

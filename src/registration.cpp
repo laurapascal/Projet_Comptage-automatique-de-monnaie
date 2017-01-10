@@ -1,7 +1,7 @@
 #include "registration.hpp"
 
 registration::registration(std::string method_keypoint_descriptor_param, std::string method_matches_param, bool debug_param)
-    :method_keypoint_descriptor(method_keypoint_descriptor_param),method_matches(method_matches_param), debug(debug_param)
+    :method_keypoint_descriptor(method_keypoint_descriptor_param), method_matches(method_matches_param), debug(debug_param)
 {
 
 }
@@ -313,10 +313,11 @@ std::vector<cv::Mat> registration::findTransformation()
     H = cv::findHomography( good_keypoints_extracted_coin, good_keypoints_data, CV_RANSAC, ransacReprojThreshold, mask);
 
     // Debug
-    display_inliers();
-    float inlierRepartition = get_inlier_repartition();
-
-    std::cout<<"Inlier repartition:"<<inlierRepartition<<std::endl;
+    if(debug)
+    {
+        display_inliers();
+        apply_homography();
+    }
 
     std::vector<cv::Mat> result;
 
@@ -360,40 +361,4 @@ void registration::apply_homography()
 
     imshow( "Apply H on the image", img_H );
     cv::waitKey(0);
-}
-
-/** ********************************************************************************* **/
-/** *************************** Cheking inlier repatition  ************************** **/
-/** ********************************************************************************* **/
-float registration::get_inlier_repartition()
-{
-    cv::Mat repartitionImage(img_ectracted_coin.rows, img_ectracted_coin.cols, CV_8UC1,  cv::Scalar(0));
-    for(int r = 0; r < mask.rows; r++)
-    {
-        if((unsigned int)mask.at<uchar>(r,0) == 1)
-        {
-            cv::Point point= keypoints_extracted_coin[ good_matches[r].queryIdx ].pt;
-            repartitionImage.at<uchar>(point.y,point.x) = 255;
-        }
-    }
-    cv::dilate(repartitionImage, repartitionImage, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(30, 30)));
-
-    imshow( "Inlier repartition", repartitionImage );
-    cv::waitKey(0);
-
-    float weighting = 0;
-
-    for(int r = 0; r < img_ectracted_coin.rows; r++ )
-    {
-        for(int l = 0; l < img_ectracted_coin.cols; l++ )
-        {
-            if( repartitionImage.at<uchar>(r,l) == 255)
-            {
-                weighting += 1;
-            }
-        }
-    }
-
-    weighting /= (img_ectracted_coin.rows*img_ectracted_coin.cols);
-    return weighting;
 }
