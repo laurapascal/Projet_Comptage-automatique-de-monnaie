@@ -116,6 +116,8 @@ int main(int argc, char** argv)
     QDir Dir_extracted_coins(extracted_coin_folder_path);
     circleDetection detection(argv[1], debug);
     detection.detection(false, detection_method, Dir_extracted_coins);
+    std::cout<<"Number of detected coin: "<<detection.vector_coins.size()<<std::endl;
+
 
     /** ********************************************************************************* **/
 
@@ -152,17 +154,26 @@ int coin_value_detection()
     {
         rg.creation_image_extracted_coin(fileList_extracted_coins[i].absoluteFilePath());
         std::cout<<fileList_extracted_coins[i].absoluteFilePath().toStdString()<<std::endl;
+        // Show the detected coin:
+        if(!debug)
+        {
+            imshow("Detected coin", rg.img_ectracted_coin);
+            cv::waitKey(0);
+        }
 
         rg.creation_keypoints_extracted_coin();
         rg.creation_descriptors_extracted_coin();
 
 
         /// Comparison with our data
+        std::string result_value_coin;
+        float score = 0;
         for(std::map<QString,std::string>::iterator it=db.map_data.begin() ; it!=db.map_data.end() ; ++it)
         {
             rg.creation_image_data(it->first);
             QString path = it->first;
-            std::cout<<path.toStdString()<<std::endl;
+            if (debug)
+                std::cout<<path.toStdString()<<std::endl;
 
             rg.creation_keypoints_data();
             rg.creation_descriptors_data();
@@ -172,11 +183,18 @@ int coin_value_detection()
 
             comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1]);
 
+            float score_temp = cmp.get_inlierScore();
 //            float score = cmp.get_templateMatching_score(true);
-            float score = cmp.get_inlierScore();
 
-            std::cout<<"score: "<<score<<std::endl;
+            if(score < score_temp)
+            {
+                score = score_temp;
+                result_value_coin = it->second;
+            }
+            if (debug)
+               std::cout<<"The score is: "<<score_temp<<std::endl;
         }
+        std::cout<<"The value of the detected coin is: "<<result_value_coin<<" with a score of "<<score<<std::endl;
     }
 
     cv::waitKey(0);

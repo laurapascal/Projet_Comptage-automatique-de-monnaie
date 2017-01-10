@@ -28,6 +28,8 @@ class circleDetection
 public:
     circleDetection(QString path_initial_image_for_detection, bool debug_param);
 
+    std::vector<coin> vector_coins;         // Vector containing the coins detected in the image
+
     /** detection of circles **/
     void detection(bool backGroundSeg, int method, QDir Dir_extracted_coins);
 
@@ -36,7 +38,6 @@ private:
 
     cv::Mat initial_image_for_detection;    // Image in which the coins will be detected
     cv::Mat curent_image_for_detection;     // Modified image
-    std::vector<coin> vector_coins;         // Vector containing the coins detected in the image
 
     /** Pre-treatment **/
     void preTreatment(bool blur);
