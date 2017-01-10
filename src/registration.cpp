@@ -373,7 +373,7 @@ float registration::get_inlier_repartition()
     imshow( "Inlier repartition", repartitionImage );
     cv::waitKey(0);
 
-    float score = 0;
+    float weighting = 0;
 
     for(int r = 0; r < img_ectracted_coin.rows; r++ )
     {
@@ -381,11 +381,11 @@ float registration::get_inlier_repartition()
         {
             if( repartitionImage.at<uchar>(r,l) == 255)
             {
-                score += 1;
+                weighting += 1;
             }
         }
     }
 
-    score /= (img_ectracted_coin.rows*img_ectracted_coin.cols);
-    return score;
+    weighting /= (img_ectracted_coin.rows*img_ectracted_coin.cols);
+    return weighting;
 }
