@@ -36,6 +36,10 @@ int main(int argc, char** argv)
     std::srand(time(NULL));
 
     /** ********************************** ARGUMENT ************************************ **/
+    if( argc % 2 != 0)
+    {
+        usage_executable(argv); exit(0);
+    }
     if( argc < 2)
     {
         usage_executable(argv); exit(0);
@@ -48,10 +52,6 @@ int main(int argc, char** argv)
             std::cout<<"The selected file "<<argv[1]<<" doesn't exist"<<std::endl;
             exit(0);
         }
-    }
-    if( argc % 2 != 0)
-    {
-        usage_executable(argv); exit(0);
     }
     for(int i = 2; i < argc; i += 2)
     {
