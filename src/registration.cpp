@@ -239,13 +239,29 @@ void registration::compute_hypothetical_matches()
 {
     compute_matches();
     compute_good_matches();
+
+    // Debug
+    display_features();
+    display_information();
     display_good_matches();
 }
 
 /** ********************************************************************************* **/
 /** ********************** Debug: Display of good matches  *********************** **/
 /** ********************************************************************************* **/
-void registration::display_good_matches()
+
+void registration::display_features()
+{
+    cv::Mat img_KPO;
+    cv::drawKeypoints(img_ectracted_coin,keypoints_extracted_coin,img_KPO, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    cv::imshow( "KeyPoints on Extracted Coin", img_KPO );
+
+    cv::Mat img_KPS;
+    cv::drawKeypoints(img_data,keypoints_data,img_KPS, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    cv::imshow( "KeyPoints on DataBase", img_KPS );
+}
+
+void registration::display_information()
 {
     std::cout<<"keypoints extracted coin: "<<keypoints_extracted_coin.size()<<std::endl;
     std::cout<<"descriptors extracted coin: "<<descriptors_extracted_coin.size()<<std::endl;
@@ -253,7 +269,11 @@ void registration::display_good_matches()
     std::cout<<"descriptors data: "<<descriptors_data.size()<<std::endl;
     std::cout<<"matches: "<<matches.size()<<std::endl;
     std::cout<<"good matches: "<<good_matches.size()<<std::endl;
+}
 
+
+void registration::display_good_matches()
+{
     cv::Mat img_matches;
     cv::drawMatches( img_ectracted_coin, keypoints_extracted_coin, img_data, keypoints_data,
                      good_matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
@@ -298,7 +318,7 @@ std::vector<cv::Mat> registration::findTransformation()
 }
 
 /** ********************************************************************************* **/
-/** *************************** Debug: Display of inliers  ************************** **/
+/** ************** Debug: Display of inliers and apply homography  ****************** **/
 /** ********************************************************************************* **/
 void registration::display_inliers()
 {
@@ -321,7 +341,10 @@ void registration::display_inliers()
     //-- Show detected matches
     imshow( "Inliers", img_inliers );
     cv::waitKey(0);
+}
 
+void registration::apply_homography()
+{
     // Apply Homography found
     std::cout<<"Transformation: "<<H<<std::endl;
     cv::Mat img_H;
@@ -329,8 +352,6 @@ void registration::display_inliers()
 
     imshow( "Apply H on the image", img_H );
     cv::waitKey(0);
-
-
 }
 
 /** ********************************************************************************* **/

@@ -72,8 +72,12 @@ private:
     void compute_matches();
     void compute_good_matches();
 
+    // DEBUG
+    void display_features();
+    void display_information();
     void display_good_matches();
     void display_inliers();
+    void apply_homography();
 };
 
 #endif // REGISTRATION_H
