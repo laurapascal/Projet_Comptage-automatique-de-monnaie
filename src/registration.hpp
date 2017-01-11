@@ -47,7 +47,8 @@ public:
 
     cv::Mat mask; // inliers
     cv::Mat H; // homography
-    std::vector<cv::Mat> findTransformation();
+    std::vector<cv::Mat> findTransformation_m1();
+    std::vector<cv::Mat> findTransformation_m2();
 
 private:
     std::string method_keypoint_descriptor;

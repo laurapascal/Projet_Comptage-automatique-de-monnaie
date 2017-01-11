@@ -199,7 +199,7 @@ int coin_value_detection()
             rg.creation_descriptors_data();
             rg.compute_hypothetical_matches();
 
-            std::vector<cv::Mat> registrationResult = rg.findTransformation(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
+            std::vector<cv::Mat> registrationResult = rg.findTransformation_m1(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
 
             comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, debug);
 

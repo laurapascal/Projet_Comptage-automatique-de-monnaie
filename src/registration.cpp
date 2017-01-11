@@ -295,7 +295,7 @@ void registration::display_good_matches()
 /** ********************************************************************************* **/
 /** ************ Compute the better transformation thanks to RanSaC  **************** **/
 /** ********************************************************************************* **/
-std::vector<cv::Mat> registration::findTransformation()
+std::vector<cv::Mat> registration::findTransformation_m1()
 {
     // Get the keypoints from the good matches
 
@@ -309,7 +309,7 @@ std::vector<cv::Mat> registration::findTransformation()
     }
 
     // Compute the better transformation
-    double ransacReprojThreshold = 3.0;
+    double ransacReprojThreshold = 6.0;
     H = cv::findHomography( good_keypoints_extracted_coin, good_keypoints_data, CV_RANSAC, ransacReprojThreshold, mask);
 
     // Debug
@@ -318,6 +318,97 @@ std::vector<cv::Mat> registration::findTransformation()
         display_inliers();
         apply_homography();
     }
+
+    std::vector<cv::Mat> result;
+
+    result.push_back(H);
+    result.push_back(mask);
+    return result;
+}
+
+std::vector<cv::Mat> registration::findTransformation_m2()
+{
+
+    int nb_inliers = 0;
+
+    // RANSAC
+    for( int i = 0; i < 10000; i++)
+    {
+        // Get the keypoints from the good matches
+        std::vector<cv::Point2f> good_keypoints_extracted_coin;
+        std::vector<cv::Point2f> good_keypoints_data;
+        for( unsigned int j = 0; j < good_matches.size(); j++ )
+        {
+            good_keypoints_extracted_coin.push_back( keypoints_extracted_coin[ good_matches[j].queryIdx ].pt );
+            good_keypoints_data.push_back( keypoints_data[ good_matches[j].trainIdx ].pt );
+        }
+
+        // Choose the 3 pairs
+        std::vector<cv::Point2f> random_keypoints_extracted_coin;
+        std::vector<cv::Point2f> ramdom_keypoints_data;
+        std::vector<int> k;
+        for( unsigned int j = 0; j < 3; j++ )
+        {
+            k.push_back(rand() % good_keypoints_data.size());
+            random_keypoints_extracted_coin.push_back( good_keypoints_extracted_coin[ k[j] ] );
+            ramdom_keypoints_data.push_back( good_keypoints_data[ k[j] ]  );
+        }
+
+        // Compute the better transformation
+        cv::Mat R = cv::estimateRigidTransform(random_keypoints_extracted_coin, ramdom_keypoints_data, false);
+
+        // Apply the found transformation
+        if(R.cols != 0 && R.rows != 0)
+        {
+            cv::Mat H_temp = cv::Mat(3,3,R.type());
+            H_temp.at<double>(0,0) = R.at<double>(0,0);
+            H_temp.at<double>(0,1) = R.at<double>(0,1);
+            H_temp.at<double>(0,2) = R.at<double>(0,2);
+
+            H_temp.at<double>(1,0) = R.at<double>(1,0);
+            H_temp.at<double>(1,1) = R.at<double>(1,1);
+            H_temp.at<double>(1,2) = R.at<double>(1,2);
+
+            H_temp.at<double>(2,0) = 0.0;
+            H_temp.at<double>(2,1) = 0.0;
+            H_temp.at<double>(2,2) = 1.0;
+
+            // Debug
+//            cv::Mat img_H;
+//            cv::warpPerspective(img_extracted_coin, img_H, H_temp, img_data.size());
+//            imshow( "Apply H on the image", img_H );
+//            cv::waitKey(0);
+
+            // Apply Homography found
+            cv::transform(good_keypoints_extracted_coin, good_keypoints_extracted_coin, R);
+
+            // Count the number of inliers
+            int nb_inliers_temp = 0 ;
+            cv::Mat mask_temp;
+            mask_temp.create(good_matches.size(), 1, mask.type());
+            for( unsigned int j = 0; j < good_keypoints_data.size(); j++ )
+            {
+                // Inlier
+                if( std::fabs(good_keypoints_extracted_coin[j].x - good_keypoints_data[j].x) < 11  && std::fabs(good_keypoints_extracted_coin[j].y - good_keypoints_data[j].y) < 11 )
+                {
+                    nb_inliers_temp += 1;
+                    mask_temp.at<uchar>(j,0) = 1;
+                }
+                // Outlier
+                else
+                    mask_temp.at<uchar>(j,0) = 0;
+            }
+            if (nb_inliers < nb_inliers_temp)
+            {
+                nb_inliers =  nb_inliers_temp;
+                H = H_temp.clone();
+                mask = mask_temp.clone();
+            }
+        }
+    }
+
+    // Debug
+    display_inliers();
 
     std::vector<cv::Mat> result;
 
