@@ -31,7 +31,10 @@ public:
     std::vector<coin> vector_coins;         // Vector containing the coins detected in the image
 
     /** detection of circles **/
-    void detection(bool backGroundSeg, QDir Dir_extracted_coins);
+    void detection();
+
+    /** extraction of the found circles **/
+    void extraction(QDir Dir_extracted_coins, int score_method);
 
 private:
     int method;
@@ -45,7 +48,6 @@ private:
     void addBlur();
     void thresholding();
     void gray_conversion();
-    void backgroundSegmantation();
 
     /** Detection with method 1 or method 2 **/
     cv::vector<cv::Vec3f> circles;
@@ -59,7 +61,10 @@ private:
     void ellipses_deletion();
 
     /** Coin Extraction **/
-    void extraction(QDir Dir_extracted_coins);
+    void clear_output(QDir Dir_extracted_coins);
+    void extract_one_coin(cv::Mat coin_image,unsigned int coin_number);
+    void extraction_square(QDir Dir_extracted_coins);
+    void extraction_circle(QDir Dir_extracted_coins);
 
     /** Debug to draw circle **/
     void draw_circles();
