@@ -201,9 +201,9 @@ int coin_value_detection()
 
             std::vector<cv::Mat> registrationResult = rg.findTransformation(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
 
-            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], debug);
+            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, debug);
 
-            float score_temp = cmp.compute_score(score_method, rg.keypoints_extracted_coin, rg.good_matches);
+            float score_temp = cmp.compute_score(rg.keypoints_extracted_coin, rg.good_matches);
 
             if(score < score_temp)
             {

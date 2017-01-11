@@ -1,7 +1,7 @@
 #include "comparison.hpp"
 
-comparison::comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, bool debug_param)
-    :homographie(homographie_param), mask(mask_param), debug(debug_param)
+comparison::comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, int method_param, bool debug_param)
+    :homographie(homographie_param), mask(mask_param), method(method_param), debug(debug_param)
 {
     img_ectracted_coin = cv::imread( img_ectracted_coin_path.toStdString(), 1 );
     assert(img_ectracted_coin.data);
@@ -9,7 +9,7 @@ comparison::comparison(QString img_ectracted_coin_path, QString img_data_path, c
     assert(img_data.data);
 }
 
-float comparison::compute_score(int method, std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches)
+float comparison::compute_score(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches)
 {
     if(method == 1)
         return get_inlierScore();

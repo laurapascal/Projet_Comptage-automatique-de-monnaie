@@ -24,15 +24,16 @@
 class comparison
 {
 public:
-    comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, bool debug_param);
+    comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, int method_param, bool debug_param);
 
-    float compute_score(int method, std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches);
+    float compute_score(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches);
 
 private:
     cv::Mat img_ectracted_coin;
     cv::Mat img_data;
     cv::Mat homographie;
     cv::Mat mask;
+    int method;
     bool debug;
 
     /** Compute score equal to the number of inliers found **/
@@ -43,7 +44,6 @@ private:
 
     /** Compute score thanks to template matching  **/
     float get_templateMatching_score();
-
 };
 
 #endif // COMPARISON_HPP

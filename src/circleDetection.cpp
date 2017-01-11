@@ -1,7 +1,7 @@
 #include "circleDetection.hpp"
 
-circleDetection::circleDetection(QString path_initial_image_for_detection, bool debug_param)
-    :debug(debug_param)
+circleDetection::circleDetection(QString path_initial_image_for_detection, int method_param, bool debug_param)
+    :method(method_param), debug(debug_param)
 {
     initial_image_for_detection = cv::imread( path_initial_image_for_detection.toStdString(), 1 );
     assert(initial_image_for_detection.data);
@@ -12,17 +12,70 @@ circleDetection::circleDetection(QString path_initial_image_for_detection, bool 
 /** ****************************** Pre-treatment  *********************************** **/
 /** ********************************************************************************* **/
 
-void circleDetection::preTreatment(bool blur)
+void circleDetection::preTreatment()
+{
+    std::cout<<curent_image_for_detection.rows<<" "<<curent_image_for_detection.cols<<std::endl;
+
+    if(method == 1)
+    {
+        addBlur();
+        gray_conversion();
+    }
+    if(method == 2)
+    {
+        thresholding();
+        gray_conversion();
+    }
+
+}
+
+void circleDetection::addBlur()
+{
+    // Reduce the noise so we avoid false circle detection
+    cv::GaussianBlur( curent_image_for_detection, curent_image_for_detection, cv::Size(9, 9), 3.5, 3.5 );
+
+    if(debug)
+    {
+        imshow( "Add a blur to the image", curent_image_for_detection );
+        cv::waitKey(0);
+    }
+}
+
+void circleDetection::thresholding()
+{
+    int sum = 0;
+    for(int r = 0; r < curent_image_for_detection.rows; r++)
+    {
+        for(int c = 0; c < curent_image_for_detection.cols; c++)
+        {
+            sum += (unsigned int)curent_image_for_detection.at<uchar>(r,c);
+        }
+    }
+    int thresh = 0.99*(sum / (curent_image_for_detection.rows * curent_image_for_detection.cols));
+
+    // Detect edges using Threshold
+    cv::threshold( curent_image_for_detection, curent_image_for_detection, thresh, 255, cv::THRESH_BINARY );
+
+    //Display of Thresholding for debug
+    if(debug)
+    {
+        imshow( "Thresholding before applying the 2nd circles detection method", curent_image_for_detection );
+        cv::waitKey(0);
+    }
+}
+
+void circleDetection::gray_conversion()
 {
     // Convert it to gray
     cvtColor( curent_image_for_detection, curent_image_for_detection, CV_BGR2GRAY );
-
-    // Reduce the noise so we avoid false circle detection
-    if(blur)
-        GaussianBlur( curent_image_for_detection, curent_image_for_detection, cv::Size(9, 9), 2, 2 );
+    if(debug)
+    {
+        imshow( "Convert the image in gray", curent_image_for_detection );
+        cv::waitKey(0);
+    }
 }
 
-void circleDetection::backgroundSegmantation(bool display)
+void circleDetection::backgroundSegmantation()
 {
     // define bounding rectangle
     int col = curent_image_for_detection.cols;
@@ -48,7 +101,7 @@ void circleDetection::backgroundSegmantation(bool display)
     curent_image_for_detection.copyTo(background,~result);
     curent_image_for_detection.copyTo(foreground,result);
 
-    if(display)
+    if(debug)
     {
         //Saving the result for debugging
         cv::Mat rect = curent_image_for_detection.clone();
@@ -64,12 +117,11 @@ void circleDetection::backgroundSegmantation(bool display)
 }
 
 /** ********************************************************************************* **/
-/** ****************** Detection with method 1 or method 2  ************************* **/
+/** **************************** Detection of circle ******************************** **/
 /** ********************************************************************************* **/
 
-cv::vector<cv::Vec3f> circleDetection::method1()
+void circleDetection::HoughDetection()
 {
-    cv::vector<cv::Vec3f> circles;
 
     /// Apply the Hough Transform to find the circles
     // im_gray: Input image (grayscale)
@@ -77,58 +129,46 @@ cv::vector<cv::Vec3f> circleDetection::method1()
     // CV_HOUGH_GRADIENT: Define the detection method. Currently this is the only one available in OpenCV
     // dp = 1: The inverse ratio of resolution
     // min_dist = im_gray.rows/8: Minimum distance between detected centers
-    // param_1 = 200: Upper threshold for the internal Canny edge detector
-    // param_2 = 65*: Threshold for center detection.
+    // param_1 = 80: Upper threshold for the internal Canny edge detector
+    // param_2 = 60*: Threshold for center detection.
     // min_radius = 0: Minimum radio to be detected. If unknown, put zero as default.
     // max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
 
-    cv::HoughCircles( curent_image_for_detection, circles, CV_HOUGH_GRADIENT, 1, curent_image_for_detection.rows/8, 200, 40, 10, 0);
-    return circles;
+    cv::HoughCircles( curent_image_for_detection, circles, CV_HOUGH_GRADIENT, 1, curent_image_for_detection.rows/20, 80, 60, 0, 0);
 }
 
-std::vector<cv::RotatedRect> circleDetection::method2()
+void circleDetection::ContourDetection()
 {
-    cv::Mat threshold_output;
+    // Find contours
     std::vector<std::vector<cv::Point> > contours;
     std::vector<cv::Vec4i> hierarchy;
-    int sum = 0;
-    for(int r = 0; r < curent_image_for_detection.rows; r++)
-    {
-        for(int c = 0; c < curent_image_for_detection.cols; c++)
-        {
-            sum += (unsigned int)curent_image_for_detection.at<uchar>(r,c);
-        }
-    }
-    int thresh = 0.8*(sum / (curent_image_for_detection.rows * curent_image_for_detection.cols));
 
-    // Detect edges using Threshold
-    cv::threshold( curent_image_for_detection, threshold_output, thresh, 255, cv::THRESH_BINARY );
-
-    //Display of Thresholding for debug
-    if(debug)
-    {
-        imshow( "Thresholding before applying the 2nd circles detection method", threshold_output );
-    }
-    // Find contours
-    cv::findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+    cv::findContours( curent_image_for_detection, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
     // Find the rotated ellipses for each contour
-    std::vector<cv::RotatedRect> ellipses;
     for( unsigned int i = 0; i < contours.size(); i++ )
     {
         if( contours[i].size() > 20 )
             ellipses.push_back(fitEllipse( cv::Mat(contours[i]) ));
     }
-
-    return ellipses;
 }
 
 /** ********************************************************************************* **/
 /** ***************************** Post-treatment  *********************************** **/
 /** ********************************************************************************* **/
+void circleDetection::post_treatment()
+{
+    if(method == 1)
+    {
+        circle_deletion();
+    }
+    else
+    {
+        ellipses_deletion();
+    }
+}
 
-
-void circleDetection::post_treatment_method1(cv::vector<cv::Vec3f> circles)
+void circleDetection::circle_deletion()
 {
     /// Treatement of the found circles
     for( size_t i = 0; i < circles.size(); i++ )
@@ -160,7 +200,7 @@ void circleDetection::post_treatment_method1(cv::vector<cv::Vec3f> circles)
     }
 }
 
-void circleDetection::post_treatment_method2(std::vector<cv::RotatedRect> ellipses)
+void circleDetection::ellipses_deletion()
 {
     /// Treatment on the found ellipses to keep only the circle and the bigger ellipses
     // IF the ellipse is not a circle THEN the ellipse is deleted
@@ -174,6 +214,7 @@ void circleDetection::post_treatment_method2(std::vector<cv::RotatedRect> ellips
         }
 
     }
+
     // IF the ellipse is in an other ellipse THEN the ellipse is deleted
     for( unsigned int i = 0; i < ellipses.size(); i++ )
     {
@@ -185,7 +226,7 @@ void circleDetection::post_treatment_method2(std::vector<cv::RotatedRect> ellips
             float radius_ellipse_temp = (ellipse_temp.size.width + ellipse_temp.size.height)/4;
             if(i!=j)
             {
-                if(std::sqrt((ellipse.center.x-ellipse_temp.center.x)*(ellipse.center.x-ellipse_temp.center.x) + (ellipse.center.y-ellipse_temp.center.y)*(ellipse.center.y-ellipse_temp.center.y)) < (radius_ellipse+radius_ellipse_temp))
+                if(std::sqrt((ellipse.center.x-ellipse_temp.center.x)*(ellipse.center.x-ellipse_temp.center.x) + (ellipse.center.y-ellipse_temp.center.y)*(ellipse.center.y-ellipse_temp.center.y)) < (radius_ellipse + radius_ellipse_temp))
                 {
                     if(radius_ellipse > radius_ellipse_temp)
                     {
@@ -193,15 +234,18 @@ void circleDetection::post_treatment_method2(std::vector<cv::RotatedRect> ellips
                         j--;
                     }
 
-                    else
+                    else if(radius_ellipse < radius_ellipse_temp)
                     {
                         ellipses.erase(ellipses.begin() + i);
                         i--;
+                        break;
                     }
+
                 }
             }
         }
     }
+    vector_coins.clear();
 
     for( unsigned int i = 0; i < ellipses.size(); i++)
     {
@@ -262,24 +306,17 @@ void circleDetection::draw_circles()
 /** ***************************** General Function  ********************************* **/
 /** ********************************************************************************* **/
 
-void circleDetection::detection(bool backGroundSeg, int method, QDir Dir_extracted_coins)
+void circleDetection::detection(bool backGroundSeg, QDir Dir_extracted_coins)
 {
     if(backGroundSeg)
-            backgroundSegmantation(true);
+        backgroundSegmantation();
+    preTreatment();
     if(method == 1)
-    {
-        preTreatment(false);
-        cv::vector<cv::Vec3f> circles;
-        circles = method1();
-        post_treatment_method1(circles);
-    }
+        HoughDetection();
     else if(method == 2)
-    {
-        preTreatment(true);
-        std::vector<cv::RotatedRect> ellipses;
-        ellipses = method2();
-        post_treatment_method2(ellipses);
-    }
+        ContourDetection();
+    post_treatment();
+
     if(debug)
         draw_circles();
     extraction(Dir_extracted_coins);

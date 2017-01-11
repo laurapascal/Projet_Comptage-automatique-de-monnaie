@@ -26,9 +26,6 @@ class registration
 public:
     registration(std::string method_keypoint_param, std::string method_matches_param, bool debug_param);
 
-    std::string method_keypoint_descriptor;
-    std::string method_matches;
-
     cv::Mat img_ectracted_coin;
     cv::Mat img_data;
     void creation_image_extracted_coin(QString path);
@@ -53,6 +50,8 @@ public:
     std::vector<cv::Mat> findTransformation();
 
 private:
+    std::string method_keypoint_descriptor;
+    std::string method_matches;
     bool debug;
 
     cv::Mat get_image(QString path);
