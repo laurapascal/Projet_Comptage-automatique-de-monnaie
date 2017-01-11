@@ -67,7 +67,7 @@ int main(int argc, char** argv)
         }
         else if(!strcmp(argv[i],"--detection"))
         {
-            if(std::atoi(argv[i + 1]) != 1 && std::atoi(argv[i + 1]) != 2)
+            if(std::atoi(argv[i + 1]) != 1 && std::atoi(argv[i + 1]) != 2 && std::atoi(argv[i + 1]) != 3)
             {
                 usage_executable(argv); exit(0);
             }
@@ -152,7 +152,10 @@ void usage_executable(char **argv)
     std::cout<<"Usage: "<<argv[0]<<" std::string> image path"<<std::endl;
     std::cout<<"Option:"<<std::endl;
     std::cout<<"\t--database: <std::string> database folder path"<<std::endl;
-    std::cout<<"\t--detection: <int> detection method number: 1 or 2"<<std::endl;
+    std::cout<<"\t--detection: <int> detection method number: 1, 2 or 3"<<std::endl;
+    std::cout<<"\t\t 1: detection thanks to Hought transform"<<std::endl;
+    std::cout<<"\t\t 2: detection thanks to threshold and contour detection"<<std::endl;
+    std::cout<<"\t\t 3: detection thanks to method 1 and 2"<<std::endl;
     std::cout<<"\t--features_detection: <std::string> features detection algorithm: 'sift' ,'surf' or 'orb'"<<std::endl;
     std::cout<<"\t--matcher: <std::string> matcher algorithm: 'flann' or 'BF'"<<std::endl;
     std::cout<<"\t--debug: <std::string> display debug images: 'true' or 'false'"<<std::endl;

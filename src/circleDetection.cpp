@@ -252,17 +252,18 @@ void circleDetection::ellipses_deletion()
 
             float radius_temp = vector_coins[j].radius;
             cv::Point center_temp = vector_coins[j].center;
-//            if(i!=j)
-//            {
+            if(i!=j)
+            {
                 if(std::sqrt((center.x-center_temp.x)*(center.x-center_temp.x) + (center.y-center_temp.y)*(center.y-center_temp.y)) < (radius + radius_temp))
                 {
                     if(radius > radius_temp)
                     {
                         vector_coins.erase(vector_coins.begin() + j);
                         j--;
+                        break;
                     }
 
-                    else if(radius < radius_temp)
+                    else
                     {
                         vector_coins.erase(vector_coins.begin() + i);
                         i--;
@@ -270,7 +271,7 @@ void circleDetection::ellipses_deletion()
                     }
 
                 }
-//            }
+            }
         }
     }
 }
@@ -335,6 +336,19 @@ void circleDetection::detection(bool backGroundSeg, QDir Dir_extracted_coins)
         HoughDetection();
     else if(method == 2)
         ContourDetection();
+    if(method == 3)
+    {
+        method = 1;
+        preTreatment();
+        HoughDetection();
+        post_treatment();
+        curent_image_for_detection = initial_image_for_detection.clone();
+        method = 2;
+        preTreatment();
+        ContourDetection();
+        post_treatment();
+        method = 3;
+    }
     post_treatment();
 
     if(debug)
