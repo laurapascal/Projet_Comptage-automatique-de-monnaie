@@ -124,8 +124,13 @@ int main(int argc, char** argv)
     /** **************************** DETECTION OF CIRCLES ******************************* **/
 
     QDir Dir_extracted_coins(extracted_coin_folder_path);
-    circleDetection detection(argv[1], debug);
-    detection.detection(false, detection_method, Dir_extracted_coins);
+    if(!Dir_extracted_coins.exists())
+    {
+        std::cout<<"The folder '"<<extracted_coin_folder_path.toStdString()<<"' to store your extracted coins doesn't exist!"<<std::endl;
+        exit(0);
+    }
+    circleDetection detection(argv[1], detection_method, debug);
+    detection.detection(false, Dir_extracted_coins);
     std::cout<<"Number of detected coin: "<<detection.vector_coins.size()<<std::endl;
 
 

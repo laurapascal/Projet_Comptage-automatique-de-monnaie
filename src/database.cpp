@@ -3,6 +3,14 @@
 database::database(QString path_database_param)
 :path_database(path_database_param)
 {
+    // Check if the folder containing the database exists
+    QDir Dir_database(path_database_param);
+    if(!Dir_database.exists())
+    {
+        std::cout<<"The folder '"<<path_database_param.toStdString()<<"' containing your database doesn't exist!"<<std::endl;
+        exit(0);
+    }
+
     // Parcours de tous les sous-repertoires contenue dans le repertoire path_database
     QDirIterator dirIterator(path_database, QDir::NoDotAndDotDot | QDir::Dirs | QDir::NoSymLinks );
     while(dirIterator.hasNext())
