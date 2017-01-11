@@ -1,10 +1,10 @@
 #include "comparison.hpp"
 
-comparison::comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, int method_param, bool debug_param)
+comparison::comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, int method_param, bool debug_param)
     :homographie(homographie_param), mask(mask_param), method(method_param), debug(debug_param)
 {
-    img_ectracted_coin = cv::imread( img_ectracted_coin_path.toStdString(), 1 );
-    assert(img_ectracted_coin.data);
+    img_extracted_coin = cv::imread( img_extracted_coin_path.toStdString(), 1 );
+    assert(img_extracted_coin.data);
     img_data = cv::imread( img_data_path.toStdString(), 1 );
     assert(img_data.data);
 }
@@ -46,7 +46,7 @@ float comparison::get_inlierScore()
 /** ********************************************************************************* **/
 float comparison::get_inlier_repartition(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches)
 {
-    cv::Mat repartitionImage(img_ectracted_coin.rows, img_ectracted_coin.cols, CV_8UC1,  cv::Scalar(0));
+    cv::Mat repartitionImage(img_extracted_coin.rows, img_extracted_coin.cols, CV_8UC1,  cv::Scalar(0));
     for(int r = 0; r < mask.rows; r++)
     {
         if((unsigned int)mask.at<uchar>(r,0) == 1)
@@ -65,9 +65,9 @@ float comparison::get_inlier_repartition(std::vector<cv::KeyPoint> keypoints, st
 
     float weighting = 0;
 
-    for(int r = 0; r < img_ectracted_coin.rows; r++ )
+    for(int r = 0; r < img_extracted_coin.rows; r++ )
     {
-        for(int l = 0; l < img_ectracted_coin.cols; l++ )
+        for(int l = 0; l < img_extracted_coin.cols; l++ )
         {
             if( repartitionImage.at<uchar>(r,l) == 255)
             {
@@ -76,7 +76,7 @@ float comparison::get_inlier_repartition(std::vector<cv::KeyPoint> keypoints, st
         }
     }
 
-    weighting /= (img_ectracted_coin.rows*img_ectracted_coin.cols);
+    weighting /= (img_extracted_coin.rows*img_extracted_coin.cols);
     return weighting;
 }
 
@@ -95,14 +95,14 @@ float comparison::get_templateMatching_score()
                                                  CV_TM_CCOEFF / CV_TM_CCOEFF_NORMED **/
 
     /// Create the result matrix
-    int result_cols =  img_data.cols - img_ectracted_coin.cols + 1;
-    int result_rows = img_data.rows - img_ectracted_coin.rows + 1;
+    int result_cols =  img_data.cols - img_extracted_coin.cols + 1;
+    int result_rows = img_data.rows - img_extracted_coin.rows + 1;
 
     cv::Mat result;
     result.create( result_rows, result_cols, CV_32FC1 );
 
     /// Do the Matching and Normalize
-    cv::matchTemplate( img_data, img_ectracted_coin, result, match_method );
+    cv::matchTemplate( img_data, img_extracted_coin, result, match_method );
     cv::normalize( result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat() );
 
     /// Localizing the best match with minMaxLoc
@@ -120,8 +120,8 @@ float comparison::get_templateMatching_score()
     /// display for debug
     if(debug)
     {
-        cv::rectangle( img_display, matchLoc, cv::Point( matchLoc.x + img_ectracted_coin.cols , matchLoc.y + img_ectracted_coin.rows ), cv::Scalar::all(0), 2, 8, 0 );
-        cv::rectangle( result, matchLoc, cv::Point( matchLoc.x + img_ectracted_coin.cols , matchLoc.y + img_ectracted_coin.rows ), cv::Scalar::all(0), 2, 8, 0 );
+        cv::rectangle( img_display, matchLoc, cv::Point( matchLoc.x + img_extracted_coin.cols , matchLoc.y + img_extracted_coin.rows ), cv::Scalar::all(0), 2, 8, 0 );
+        cv::rectangle( result, matchLoc, cv::Point( matchLoc.x + img_extracted_coin.cols , matchLoc.y + img_extracted_coin.rows ), cv::Scalar::all(0), 2, 8, 0 );
 
         cv::imshow( "image détectée", img_display );
         cv::imshow( "resultat du template matching", result );

@@ -24,12 +24,12 @@
 class comparison
 {
 public:
-    comparison(QString img_ectracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, int method_param, bool debug_param);
+    comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, int method_param, bool debug_param);
 
     float compute_score(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches);
 
 private:
-    cv::Mat img_ectracted_coin;
+    cv::Mat img_extracted_coin;
     cv::Mat img_data;
     cv::Mat homographie;
     cv::Mat mask;

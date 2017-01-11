@@ -12,7 +12,7 @@ registration::registration(std::string method_keypoint_descriptor_param, std::st
 
 void registration::creation_image_extracted_coin(QString path)
 {
-    img_ectracted_coin = get_image(path);
+    img_extracted_coin = get_image(path);
 }
 
 void registration::creation_image_data(QString path)
@@ -32,11 +32,11 @@ void registration::creation_keypoints_extracted_coin()
 {
     std::vector<cv::KeyPoint> keypoints;
     if( method_keypoint_descriptor == "sift" )
-        keypoints = get_keypoints_Sift(img_ectracted_coin);
+        keypoints = get_keypoints_Sift(img_extracted_coin);
     else if( method_keypoint_descriptor == "surf" )
-        keypoints = get_keypoints_Surf(img_ectracted_coin);
+        keypoints = get_keypoints_Surf(img_extracted_coin);
     else if( method_keypoint_descriptor == "orb" )
-        keypoints = get_keypoints_ORB(img_ectracted_coin);
+        keypoints = get_keypoints_ORB(img_extracted_coin);
 
     keypoints_extracted_coin = keypoints;
 }
@@ -114,11 +114,11 @@ void registration::creation_descriptors_extracted_coin()
 {
     cv::Mat descriptors;
     if( method_keypoint_descriptor == "sift" )
-        descriptors = get_descriptors_Sift(img_ectracted_coin, keypoints_extracted_coin);
+        descriptors = get_descriptors_Sift(img_extracted_coin, keypoints_extracted_coin);
     else if( method_keypoint_descriptor == "surf" )
-        descriptors = get_descriptors_Surf(img_ectracted_coin, keypoints_extracted_coin);
+        descriptors = get_descriptors_Surf(img_extracted_coin, keypoints_extracted_coin);
     else if( method_keypoint_descriptor == "orb" )
-        descriptors = get_descriptors_ORB(img_ectracted_coin, keypoints_extracted_coin);
+        descriptors = get_descriptors_ORB(img_extracted_coin, keypoints_extracted_coin);
 
     descriptors_extracted_coin = descriptors;
 }
@@ -261,7 +261,7 @@ void registration::compute_hypothetical_matches()
 void registration::display_features()
 {
     cv::Mat img_KPO;
-    cv::drawKeypoints(img_ectracted_coin,keypoints_extracted_coin,img_KPO, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    cv::drawKeypoints(img_extracted_coin,keypoints_extracted_coin,img_KPO, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     cv::imshow( "KeyPoints on Extracted Coin", img_KPO );
 
     cv::Mat img_KPS;
@@ -283,7 +283,7 @@ void registration::display_information()
 void registration::display_good_matches()
 {
     cv::Mat img_matches;
-    cv::drawMatches( img_ectracted_coin, keypoints_extracted_coin, img_data, keypoints_data,
+    cv::drawMatches( img_extracted_coin, keypoints_extracted_coin, img_data, keypoints_data,
                      good_matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
                      std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
 
@@ -343,7 +343,7 @@ void registration::display_inliers()
     }
 
     cv::Mat img_inliers;
-    cv::drawMatches( img_ectracted_coin, keypoints_extracted_coin, img_data, keypoints_data,
+    cv::drawMatches( img_extracted_coin, keypoints_extracted_coin, img_data, keypoints_data,
                      inliers, img_inliers, cv::Scalar::all(-1), cv::Scalar::all(-1),
                      std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
 
@@ -357,7 +357,7 @@ void registration::apply_homography()
     // Apply Homography found
     std::cout<<"Transformation: "<<H<<std::endl;
     cv::Mat img_H;
-    cv::warpPerspective(img_ectracted_coin, img_H, H, img_data.size());
+    cv::warpPerspective(img_extracted_coin, img_H, H, img_data.size());
 
     imshow( "Apply H on the image", img_H );
     cv::waitKey(0);

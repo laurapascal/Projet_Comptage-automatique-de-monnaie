@@ -26,7 +26,7 @@ class registration
 public:
     registration(std::string method_keypoint_param, std::string method_matches_param, bool debug_param);
 
-    cv::Mat img_ectracted_coin;
+    cv::Mat img_extracted_coin;
     cv::Mat img_data;
     void creation_image_extracted_coin(QString path);
     void creation_image_data(QString path);

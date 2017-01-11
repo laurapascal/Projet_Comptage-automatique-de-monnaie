@@ -177,7 +177,7 @@ int coin_value_detection()
         // Show the detected coin:
         if(!debug)
         {
-            imshow("Detected coin", rg.img_ectracted_coin);
+            imshow("Detected coin", rg.img_extracted_coin);
             cv::waitKey(0);
         }
 
