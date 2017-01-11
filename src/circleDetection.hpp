@@ -55,6 +55,9 @@ private:
 
     /** Post-treatment **/
     void post_treatment();
+    void circle_store();
+    void ellipse_store();
+    void deleting_circles_outside_the_image();
     void circle_deletion();
     void ellipses_deletion();
 
