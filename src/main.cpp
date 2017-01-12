@@ -200,7 +200,7 @@ int coin_value_detection()
 
             comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, debug);
 
-            float score_temp = cmp.compute_score(rg.keypoints_extracted_coin, rg.good_matches);
+            float score_temp = cmp.compute_score(rg.keypoints_extracted_coin, rg.matches);
 
             if(score < score_temp)
             {

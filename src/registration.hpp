@@ -42,7 +42,6 @@ public:
     void creation_descriptors_data();
 
     std::vector<cv::DMatch> matches;
-    std::vector< cv::DMatch > good_matches;
     void compute_hypothetical_matches();
 
     cv::Mat mask; // inliers
@@ -68,13 +67,10 @@ private:
     std::vector<cv::DMatch> get_matches_FLANN();
     std::vector<cv::DMatch> get_matches_BF();
 
-    void compute_matches();
-    void compute_good_matches();
-
     // DEBUG
     void display_features();
     void display_information();
-    void display_good_matches();
+    void display_matches();
     void display_inliers();
     void apply_homography();
 };

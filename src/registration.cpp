@@ -173,15 +173,23 @@ cv::Mat registration::get_descriptors_ORB(cv::Mat img, std::vector<cv::KeyPoint>
 }
 
 /** ********************************************************************************* **/
-/** ******************************* Compute matches  ******************************** **/
+/** ************************* Compute hypothetical matches  ************************* **/
 /** ********************************************************************************* **/
 
-void registration::compute_matches()
+void registration::compute_hypothetical_matches()
 {
     if( method_matches == "flann")
         matches = get_matches_FLANN();
     else if( method_matches == "BF" )
         matches = get_matches_BF();
+
+    // Debug
+    if(debug)
+    {
+        display_features();
+        display_information();
+        display_matches();
+    }
 }
 
 
@@ -212,50 +220,7 @@ std::vector<cv::DMatch> registration::get_matches_BF()
 }
 
 /** ********************************************************************************* **/
-/** **************************** Compute good matches  ****************************** **/
-/** ********************************************************************************* **/
-
-void registration::compute_good_matches()
-{
-    good_matches.clear();
-
-    //-- Quick calculation of max and min distances between keypoints
-    double max_dist= 0;
-    double min_dist = 100;
-    for( int i = 0; i < descriptors_extracted_coin.rows; i++ )
-    { double dist = matches[i].distance;
-        if( dist < min_dist ) min_dist = dist;
-        if( dist > max_dist ) max_dist = dist;
-    }
-
-    for( int i = 0; i < descriptors_extracted_coin.rows; i++ )
-    {
-        if( matches[i].distance < 3*min_dist )
-        {
-            good_matches.push_back( matches[i]);
-        }
-    }
-}
-
-/** ********************************************************************************* **/
-/** ************************* Compute hypothetical matches  ************************* **/
-/** ********************************************************************************* **/
-void registration::compute_hypothetical_matches()
-{
-    compute_matches();
-    compute_good_matches();
-
-    // Debug
-    if(debug)
-    {
-        display_features();
-        display_information();
-        display_good_matches();
-    }
-}
-
-/** ********************************************************************************* **/
-/** ********************** Debug: Display of good matches  *********************** **/
+/** ***************** Debug: display of all the information computed  *************** **/
 /** ********************************************************************************* **/
 
 void registration::display_features()
@@ -276,15 +241,14 @@ void registration::display_information()
     std::cout<<"keypoints data: "<<keypoints_data.size()<<std::endl;
     std::cout<<"descriptors data: "<<descriptors_data.size()<<std::endl;
     std::cout<<"matches: "<<matches.size()<<std::endl;
-    std::cout<<"good matches: "<<good_matches.size()<<std::endl;
 }
 
 
-void registration::display_good_matches()
+void registration::display_matches()
 {
     cv::Mat img_matches;
     cv::drawMatches( img_extracted_coin, keypoints_extracted_coin, img_data, keypoints_data,
-                     good_matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
+                     matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1),
                      std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS );
 
     //-- Show detected matches
@@ -302,10 +266,10 @@ std::vector<cv::Mat> registration::findTransformation()
     std::vector<cv::Point2f> good_keypoints_extracted_coin;
     std::vector<cv::Point2f> good_keypoints_data;
 
-    for( unsigned int i = 0; i < good_matches.size(); i++ )
+    for( unsigned int i = 0; i < matches.size(); i++ )
     {
-        good_keypoints_extracted_coin.push_back( keypoints_extracted_coin[ good_matches[i].queryIdx ].pt );
-        good_keypoints_data.push_back( keypoints_data[ good_matches[i].trainIdx ].pt );
+        good_keypoints_extracted_coin.push_back( keypoints_extracted_coin[ matches[i].queryIdx ].pt );
+        good_keypoints_data.push_back( keypoints_data[ matches[i].trainIdx ].pt );
     }
 
     // Compute the better transformation
@@ -337,7 +301,7 @@ void registration::display_inliers()
     {
         if((unsigned int)mask.at<uchar>(r,0) == 1)
         {
-            inliers.push_back(good_matches[r]);
+            inliers.push_back(matches[r]);
 
         }
     }
