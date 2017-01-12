@@ -177,12 +177,6 @@ int coin_value_detection()
     {
         rg.creation_image_extracted_coin(fileList_extracted_coins[i].absoluteFilePath());
         std::cout<<fileList_extracted_coins[i].absoluteFilePath().toStdString()<<std::endl;
-        // Show the detected coin:
-        if(!debug)
-        {
-            imshow("Detected coin", rg.img_extracted_coin);
-            cv::waitKey(0);
-        }
 
         rg.creation_keypoints_extracted_coin();
         rg.creation_descriptors_extracted_coin();
