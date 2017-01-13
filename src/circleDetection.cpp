@@ -143,12 +143,19 @@ void circleDetection::ContourDetection()
 
     cv::findContours( curent_image_for_detection, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
+    if(debug)
+        draw_contours(contours);
+
+
     // Find the rotated ellipses for each contour
     for( unsigned int i = 0; i < contours.size(); i++ )
     {
         if( contours[i].size() > (curent_image_for_detection.rows + curent_image_for_detection.cols)/40 )
             ellipses.push_back(fitEllipse( cv::Mat(contours[i]) ));
     }
+
+    if(debug)
+        draw_ellipses();
 }
 
 /** ********************************************************************************* **/
@@ -301,7 +308,7 @@ void circleDetection::extraction(QDir Dir_extracted_coins)
 }
 
 /** ********************************************************************************* **/
-/** ************************** Debug to draw circles  ******************************* **/
+/** ***************** Debug to draw circles, ellipses and contours ****************** **/
 /** ********************************************************************************* **/
 
 void circleDetection::draw_circles()
@@ -320,6 +327,31 @@ void circleDetection::draw_circles()
     }
 
     imshow( "Circle detection", im );
+    cv::waitKey(0);
+}
+
+void circleDetection::draw_ellipses()
+{
+    cv::Mat im;
+    im=initial_image_for_detection.clone();
+    for( size_t i = 0; i< ellipses.size(); i++ )
+    {
+        cv::ellipse( im, ellipses[i], cv::Scalar(0,0,255), 3, 8 );
+    }
+    imshow( "Ellipses detection", im );
+    cv::waitKey(0);
+}
+
+void circleDetection::draw_contours(std::vector<std::vector<cv::Point> > contours)
+{
+
+    cv::Mat im;
+    im=initial_image_for_detection.clone();
+    for( size_t i = 0; i< contours.size(); i++ )
+    {
+        cv::drawContours( im, contours, (int)i, cv::Scalar(0,0,255), 3, 8);
+    }
+    imshow( "Contours detection", im );
     cv::waitKey(0);
 }
 

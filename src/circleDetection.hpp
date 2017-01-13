@@ -67,6 +67,11 @@ private:
     /** Debug to draw circle **/
     void draw_circles();
 
+    /** Debug to draw ellipses **/
+    void draw_ellipses();
+
+    /** Debug to draw ellipses **/
+    void draw_contours(std::vector<std::vector<cv::Point> > contours);
 };
 
 #endif // CIRCLEDETECTION_HPP
