@@ -26,7 +26,9 @@ QString extracted_coin_folder_path = "output";
 std::string algorithm_features_detection = "sift";
 std::string algorithm_matcher = "BF";
 int score_method = 1;
-bool debug = false;
+bool debug_circleDetection = false;
+bool debug_registration = false;
+bool debug_comparison = false;
 
 int coin_value_detection();
 void usage_executable(char** argv);
@@ -94,14 +96,22 @@ int main(int argc, char** argv)
         }
         else if(!strcmp(argv[i],"--debug"))
         {
-            if(strcmp(argv[i + 1], "true") && strcmp(argv[i + 1], "false"))
+            if(strcmp(argv[i + 1], "all") && strcmp(argv[i + 1], "none") && std::atoi(argv[i + 1]) != 1 && std::atoi(argv[i + 1]) != 2 && std::atoi(argv[i + 1]) != 3)
             {
                 usage_executable(argv); exit(0);
             }
-            else if(!strcmp(argv[i + 1], "true"))
-                debug = true;
-            else if(!strcmp(argv[i + 1], "false"))
-                debug = false;
+            else if(!strcmp(argv[i + 1], "all"))
+            {
+                debug_circleDetection = true;
+                debug_registration = true;
+                debug_comparison = true;
+            }
+            else if(std::atoi(argv[i + 1]) == 1)
+                debug_circleDetection = true;
+            else if(std::atoi(argv[i + 1]) == 2)
+                debug_registration = true;
+            else if(std::atoi(argv[i + 1]) == 3)
+                debug_comparison = true;
         }
         else if(!strcmp(argv[i],"--score"))
         {
@@ -134,7 +144,7 @@ int main(int argc, char** argv)
         std::cout<<"The folder '"<<extracted_coin_folder_path.toStdString()<<"' to store your extracted coins doesn't exist!"<<std::endl;
         exit(0);
     }
-    circleDetection detection(argv[1], detection_method, debug);
+    circleDetection detection(argv[1], detection_method, debug_circleDetection);
     detection.detection();
     detection.extraction(Dir_extracted_coins, score_method);
     std::cout<<"Number of detected coin: "<<detection.vector_coins.size()<<std::endl;
@@ -164,7 +174,12 @@ void usage_executable(char **argv)
     std::cout<<"\t\t 3: detection thanks to method 1 and 2"<<std::endl;
     std::cout<<"\t--features_detection: <std::string> features detection algorithm: 'sift' ,'surf' or 'orb'"<<std::endl;
     std::cout<<"\t--matcher: <std::string> matcher algorithm: 'flann' or 'BF'"<<std::endl;
-    std::cout<<"\t--debug: <std::string> display debug images: 'true' or 'false'"<<std::endl;
+    std::cout<<"\t--debug: <std::string> display debug images: 'all', 'none', '1', '2', or '3'"<<std::endl;
+    std::cout<<"\t\t all: display debug for all steps"<<std::endl;
+    std::cout<<"\t\t none: doesn't display any debug"<<std::endl;
+    std::cout<<"\t\t 1: display debug for circle destection step"<<std::endl;
+    std::cout<<"\t\t 2: display debug for registration step"<<std::endl;
+    std::cout<<"\t\t 3: display debug for score computation step"<<std::endl;
     std::cout<<"\t--score: <int> score computing method: 1 or 2"<<std::endl;
     std::cout<<"\t\t 1: compute the score with the number of inliers found"<<std::endl;
     std::cout<<"\t\t 2: add of a weighting compute with the repartition of the inliers found"<<std::endl;
@@ -176,7 +191,7 @@ void usage_executable(char **argv)
 int coin_value_detection()
 {
     database db(database_folder_path);
-    registration rg(algorithm_features_detection, algorithm_matcher, debug);
+    registration rg(algorithm_features_detection, algorithm_matcher, debug_registration);
     QDir Dir_extracted_coins(extracted_coin_folder_path);
     QFileInfoList fileList_extracted_coins;
     fileList_extracted_coins.append(Dir_extracted_coins.entryInfoList());
@@ -196,7 +211,7 @@ int coin_value_detection()
         {
             rg.creation_image_data(it->first);
             QString path = it->first;
-            if (debug)
+            if (debug_registration || debug_comparison)
                 std::cout<<path.toStdString()<<std::endl;
 
             rg.creation_keypoints_data();
@@ -205,7 +220,7 @@ int coin_value_detection()
 
             std::vector<cv::Mat> registrationResult = rg.findTransformation(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
 
-            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, debug);
+            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, debug_comparison);
 
             float score_temp = cmp.compute_score(rg.keypoints_extracted_coin, rg.matches);
 
@@ -214,7 +229,7 @@ int coin_value_detection()
                 score = score_temp;
                 result_value_coin = it->second;
             }
-            if (debug)
+            if (debug_comparison)
                std::cout<<"The score is: "<<score_temp<<std::endl;
         }
         std::cout<<"The value of the detected coin is: "<<result_value_coin<<" with a score of "<<score<<std::endl;
