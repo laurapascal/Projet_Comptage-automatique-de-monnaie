@@ -144,7 +144,9 @@ cv::Mat comparison::erase_background(cv::Mat input_image)
         cv::rectangle(rect, rectangle, cv::Scalar(255,0,0),1);
         cv::imshow("initial rectangle",rect);
         cv::imshow("Foreground",foreground);
+        cv::waitKey(0);
         cv::imshow("Background",background);
+        cv::waitKey(0);
     }
     cv::Mat zero(input_image.size(),CV_8UC3,cv::Scalar(0,0,0));
     cv::Mat one(input_image.size(),CV_8UC3,cv::Scalar(255,255,255));
