@@ -228,11 +228,14 @@ int coin_value_detection()
             rg.creation_keypoints_data();
             rg.creation_descriptors_data();
             rg.compute_hypothetical_matches();
+            float score_temp = 0;
+            if(rg.matches.size() != 0)
+            {
+                std::vector<cv::Mat> registrationResult = rg.findTransformation(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
+                comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, size, debug_comparison);
 
-            std::vector<cv::Mat> registrationResult = rg.findTransformation(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
-            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, size, debug_comparison);
-
-            float score_temp = cmp.compute_score(rg.keypoints_extracted_coin, rg.matches);
+                score_temp = cmp.compute_score(rg.keypoints_extracted_coin, rg.matches);
+            }
 
             if(score < score_temp)
             {
@@ -242,7 +245,13 @@ int coin_value_detection()
             if (debug_comparison)
                std::cout<<"The score is: "<<score_temp<<std::endl;
         }
-        std::cout<<"The value of the detected coin is: "<<result_value_coin<<" with a score of "<<score<<std::endl;
+        if(!result_value_coin.empty())
+            std::cout<<"The value of the detected coin is: "<<result_value_coin<<" with a score of "<<score<<std::endl;
+        else
+        {
+            std::cout<<"The value of the detected coin wasn't found! There is maybe something wrong with your database! "<<std::endl;
+            exit(0);
+        }
     }
 
     cv::waitKey(0);
