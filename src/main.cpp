@@ -117,6 +117,11 @@ int main(int argc, char** argv)
             usage_executable(argv); exit(0);
         }
     }
+    if(algorithm_features_detection == "orb" && algorithm_matcher == "flann")
+    {
+        std::cout<<"You can't use the descriptor ORB with the matcher FLANN!"<<std::endl;
+        exit(0);
+    }
 
     /** ********************************************************************************* **/
 
