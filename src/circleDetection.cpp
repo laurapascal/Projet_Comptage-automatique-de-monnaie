@@ -98,9 +98,8 @@ void circleDetection::ContourDetection()
 {
     // Find contours
     std::vector<std::vector<cv::Point> > contours;
-    std::vector<cv::Vec4i> hierarchy;
 
-    cv::findContours( curent_image_for_detection, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    cv::findContours( curent_image_for_detection, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
     if(debug)
         draw_contours(contours);
