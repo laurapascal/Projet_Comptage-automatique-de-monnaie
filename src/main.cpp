@@ -26,6 +26,7 @@ QString extracted_coin_folder_path = "output";
 std::string algorithm_features_detection = "sift";
 std::string algorithm_matcher = "BF";
 int score_method = 1;
+int size = 250;
 bool debug = false;
 
 int coin_value_detection();
@@ -112,6 +113,15 @@ int main(int argc, char** argv)
             else
                 score_method = std::atoi(argv[i + 1]);
         }
+        else if(!strcmp(argv[i],"--size"))
+        {
+            if(std::atoi(argv[i + 1]) < 250 || std::atoi(argv[i + 1]) > 1000)
+            {
+                usage_executable(argv); exit(0);
+            }
+            else
+                size = std::atoi(argv[i + 1]);
+        }
         else
         {
             usage_executable(argv); exit(0);
@@ -131,7 +141,7 @@ int main(int argc, char** argv)
     }
     circleDetection detection(argv[1], detection_method, debug);
     detection.detection();
-    detection.extraction(Dir_extracted_coins, score_method);
+    detection.extraction(Dir_extracted_coins, score_method, size);
     std::cout<<"Number of detected coin: "<<detection.vector_coins.size()<<std::endl;
 
 
@@ -164,7 +174,8 @@ void usage_executable(char **argv)
     std::cout<<"\t\t 1: compute the score with the number of inliers found"<<std::endl;
     std::cout<<"\t\t 2: add of a weighting compute with the repartition of the inliers found"<<std::endl;
     std::cout<<"\t\t 3: compute the score with template matching"<<std::endl;
-    std::cout<<"\nOption Values by default: --database Test_DataBase --detection 1 --features_detection sift --matcher BF --debug false --score 1"<<std::endl;
+    std::cout<<"\t--size: <int> size used for the resize (of the database and the extracted coins) before the comparaison: between 250 and 1000"<<std::endl;
+    std::cout<<"\nOption Values by default: --database Test_DataBase --detection 1 --features_detection sift --matcher BF --debug false --score 1 --size 250"<<std::endl;
 
 }
 
@@ -189,7 +200,7 @@ int coin_value_detection()
         float score = 0;
         for(std::map<QString,std::string>::iterator it=db.map_data.begin() ; it!=db.map_data.end() ; ++it)
         {
-            rg.creation_image_data(it->first);
+            rg.creation_image_data(it->first, size);
             QString path = it->first;
             if (debug)
                 std::cout<<path.toStdString()<<std::endl;
@@ -200,7 +211,7 @@ int coin_value_detection()
 
             std::vector<cv::Mat> registrationResult = rg.findTransformation(); // registrationResult[0]: homography registrationResult[1]: inliers matrix
 
-            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, debug);
+            comparison cmp(fileList_extracted_coins[i].absoluteFilePath(), it->first, registrationResult[0], registrationResult[1], score_method, size, debug);
 
             float score_temp = cmp.compute_score(rg.keypoints_extracted_coin, rg.matches);
 

@@ -257,7 +257,7 @@ void circleDetection::clear_output(QDir Dir_extracted_coins)
     }
 }
 
-void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_number)
+void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_number, int size)
 {
     // Extract one coins in an output floder
     cv::Mat extracted_coin;
@@ -265,21 +265,25 @@ void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_num
                                          vector_coins[coin_number].center.y-vector_coins[coin_number].radius,
                                          vector_coins[coin_number].radius*2,vector_coins[coin_number].radius*2));
     std::string name_extracted_coin = "output/coin" + std::to_string(coin_number) + ".jpg";
+    cv::Size newsize;
+    newsize.height = size;
+    newsize.width = size;
+    cv::resize(extracted_coin,extracted_coin,newsize);
     cv::imwrite( name_extracted_coin, extracted_coin);
 }
 
-void circleDetection::extraction_square(QDir Dir_extracted_coins)
+void circleDetection::extraction_square(QDir Dir_extracted_coins, int size)
 {
     clear_output(Dir_extracted_coins);
 
     // Extract each coins in an output floder
     for( unsigned int i = 0; i < vector_coins.size(); i++ )
     {
-        extract_one_coin(initial_image_for_detection,i);
+        extract_one_coin(initial_image_for_detection, i, size);
     }
 }
 
-void circleDetection::extraction_circle(QDir Dir_extracted_coins)
+void circleDetection::extraction_circle(QDir Dir_extracted_coins, int size)
 {
     clear_output(Dir_extracted_coins);
 
@@ -292,7 +296,7 @@ void circleDetection::extraction_circle(QDir Dir_extracted_coins)
         cv::Mat unique_coin_image(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
         initial_image_for_detection.copyTo(unique_coin_image, binary_mask);
 
-        extract_one_coin(unique_coin_image,i);
+        extract_one_coin(unique_coin_image, i, size);
     }
 }
 
@@ -374,14 +378,14 @@ void circleDetection::detection()
         draw_circles();
 }
 
-void circleDetection::extraction(QDir Dir_extracted_coins, int score_method)
+void circleDetection::extraction(QDir Dir_extracted_coins, int score_method, int size)
 {
     if(score_method == 3)
     {
-        extraction_circle(Dir_extracted_coins);
+        extraction_circle(Dir_extracted_coins, size);
     }
     else
     {
-        extraction_square(Dir_extracted_coins);
+        extraction_square(Dir_extracted_coins, size);
     }
 }
