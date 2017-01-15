@@ -105,7 +105,7 @@ int main(int argc, char** argv)
         }
         else if(!strcmp(argv[i],"--score"))
         {
-            if(std::atoi(argv[i + 1]) != 1 && std::atoi(argv[i + 1]) != 2)
+            if(std::atoi(argv[i + 1]) != 1 && std::atoi(argv[i + 1]) != 2 && std::atoi(argv[i + 1]) != 3)
             {
                 usage_executable(argv); exit(0);
             }
@@ -130,7 +130,8 @@ int main(int argc, char** argv)
         exit(0);
     }
     circleDetection detection(argv[1], detection_method, debug);
-    detection.detection(false, Dir_extracted_coins);
+    detection.detection();
+    detection.extraction(Dir_extracted_coins, score_method);
     std::cout<<"Number of detected coin: "<<detection.vector_coins.size()<<std::endl;
 
 
@@ -162,6 +163,7 @@ void usage_executable(char **argv)
     std::cout<<"\t--score: <int> score computing method: 1 or 2"<<std::endl;
     std::cout<<"\t\t 1: compute the score with the number of inliers found"<<std::endl;
     std::cout<<"\t\t 2: add of a weighting compute with the repartition of the inliers found"<<std::endl;
+    std::cout<<"\t\t 3: compute the score with template matching"<<std::endl;
     std::cout<<"\nOption Values by default: --database Test_DataBase --detection 1 --features_detection sift --matcher BF --debug false --score 1"<<std::endl;
 
 }

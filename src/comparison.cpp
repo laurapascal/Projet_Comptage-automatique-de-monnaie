@@ -1,7 +1,7 @@
 #include "comparison.hpp"
 
-comparison::comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, int method_param, bool debug_param)
-    :homographie(homographie_param), mask(mask_param), method(method_param), debug(debug_param)
+comparison::comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat H_param, cv::Mat mask_param, int method_param, bool debug_param)
+    :H(H_param), mask(mask_param), method(method_param), debug(debug_param)
 {
     img_extracted_coin = cv::imread( img_extracted_coin_path.toStdString(), 1 );
     assert(img_extracted_coin.data);
@@ -86,47 +86,72 @@ float comparison::get_inlier_repartition(std::vector<cv::KeyPoint> keypoints, st
 /** ********************************************************************************* **/
 float comparison::get_templateMatching_score()
 {
-    /// Source image to display
-    cv::Mat img_display;
-    img_data.copyTo( img_display );
+    cv::Mat img_H;
+    cv::warpPerspective(img_extracted_coin, img_H, H, img_data.size());
+
+    // Source image to display
+    cv::Mat img_treated_data = erase_background(img_data);
+
 
     int match_method = CV_TM_CCOEFF_NORMED; /** CV_TM_SQDIFF / CV_TM_SQDIFF_NORMED /
                                                  CV_TM_CCORR / CV_TM_CCORR_NORMED /
                                                  CV_TM_CCOEFF / CV_TM_CCOEFF_NORMED **/
 
-    /// Create the result matrix
-    int result_cols =  img_data.cols - img_extracted_coin.cols + 1;
-    int result_rows = img_data.rows - img_extracted_coin.rows + 1;
-
+    // Create the result matrix (the size is 1*1 because the size of the two images is the same)
     cv::Mat result;
-    result.create( result_rows, result_cols, CV_32FC1 );
+    result.create( 1, 1, CV_32FC1 );
 
-    /// Do the Matching and Normalize
-    cv::matchTemplate( img_data, img_extracted_coin, result, match_method );
-    cv::normalize( result, result, 0, 1, cv::NORM_MINMAX, -1, cv::Mat() );
-
-    /// Localizing the best match with minMaxLoc
-    double minVal; double maxVal; cv::Point minLoc; cv::Point maxLoc;
-    cv::Point matchLoc;
-
-    cv::minMaxLoc( result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat() );
-
-    /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
+    // Compare the to images pixels one by one and return a result
+    cv::matchTemplate( img_treated_data, img_H, result, match_method );
     if( match_method  == CV_TM_SQDIFF || match_method == CV_TM_SQDIFF_NORMED )
-    { matchLoc = minLoc; }
+        return 1000.0 - result.at<float>( 0, 0 );  //in those cases the best match is the lowest score
     else
-    { matchLoc = maxLoc; }
+        return result.at<float>( 0, 0 );  //in the other cases the best match is the highest score
+}
 
-    /// display for debug
+// Deletion of the background thanks to grab-cut
+cv::Mat comparison::erase_background(cv::Mat input_image)
+{
+
+    // define bounding rectangle
+    int col = input_image.cols;
+    col *= 0.01;
+    cv::Rect rectangle(col,col,input_image.cols-col*2,input_image.rows-col*2);
+
+    cv::Mat result_seg; // segmentation result (4 possible values)
+    cv::Mat bgModel,fgModel; // the models (internally used)
+
+    // GrabCut segmentation
+    cv::grabCut(input_image,    // input image
+                result_seg,   // segmentation result
+                rectangle,// rectangle containing foreground
+                bgModel,fgModel, // models
+                2,        // number of iterations
+                cv::GC_INIT_WITH_RECT); // use rectangle
+
+    // Get the pixels marked as likely foreground
+    cv::compare(result_seg,cv::GC_PR_FGD,result_seg,cv::CMP_EQ);
+    // Generate output image
+    cv::Mat foreground(input_image.size(),CV_8UC3,cv::Scalar(0,0,0));
+    cv::Mat background(input_image.size(),CV_8UC3,cv::Scalar(0,0,0));
+    input_image.copyTo(background,~result_seg);
+    input_image.copyTo(foreground,result_seg);
+
     if(debug)
     {
-        cv::rectangle( img_display, matchLoc, cv::Point( matchLoc.x + img_extracted_coin.cols , matchLoc.y + img_extracted_coin.rows ), cv::Scalar::all(0), 2, 8, 0 );
-        cv::rectangle( result, matchLoc, cv::Point( matchLoc.x + img_extracted_coin.cols , matchLoc.y + img_extracted_coin.rows ), cv::Scalar::all(0), 2, 8, 0 );
-
-        cv::imshow( "image détectée", img_display );
-        cv::imshow( "resultat du template matching", result );
-        cv::waitKey(0);
+        //Saving the result for debugging
+        cv::Mat rect = input_image.clone();
+        cv::rectangle(rect, rectangle, cv::Scalar(255,0,0),1);
+        cv::imshow("initial rectangle",rect);
+        cv::imshow("Foreground",foreground);
+        cv::imshow("Background",background);
     }
+    cv::Mat zero(input_image.size(),CV_8UC3,cv::Scalar(0,0,0));
+    cv::Mat one(input_image.size(),CV_8UC3,cv::Scalar(255,255,255));
+    one.copyTo(zero,result_seg);
 
-    return mask.at<uchar>(matchLoc.x,matchLoc.y);
+    cv::Mat output_image;
+    output_image = zero.clone();
+
+    return output_image;
 }

@@ -73,47 +73,6 @@ void circleDetection::gray_conversion()
     }
 }
 
-void circleDetection::backgroundSegmantation()
-{
-    // define bounding rectangle
-    int col = curent_image_for_detection.cols;
-    col *= 0.01;
-    cv::Rect rectangle(col,col,curent_image_for_detection.cols-col*2,curent_image_for_detection.rows-col*2);
-
-    cv::Mat result; // segmentation result (4 possible values)
-    cv::Mat bgModel,fgModel; // the models (internally used)
-
-    // GrabCut segmentation
-    cv::grabCut(curent_image_for_detection,    // input image
-                result,   // segmentation result
-                rectangle,// rectangle containing foreground
-                bgModel,fgModel, // models
-                2,        // number of iterations
-                cv::GC_INIT_WITH_RECT); // use rectangle
-
-    // Get the pixels marked as likely foreground
-    cv::compare(result,cv::GC_PR_FGD,result,cv::CMP_EQ);
-    // Generate output image
-    cv::Mat foreground(curent_image_for_detection.size(),CV_8UC3,cv::Scalar(255,0,255));
-    cv::Mat background(curent_image_for_detection.size(),CV_8UC3,cv::Scalar(255,0,255));
-    curent_image_for_detection.copyTo(background,~result);
-    curent_image_for_detection.copyTo(foreground,result);
-
-    if(debug)
-    {
-        //Saving the result for debugging
-        cv::Mat rect = curent_image_for_detection.clone();
-        cv::rectangle(rect, rectangle, cv::Scalar(255,0,0),1);
-        cv::imshow("initial rectangle",rect);
-        cv::imshow("Foreground",foreground);
-        cv::imshow("Background",background);
-    }
-    cv::Mat zero(curent_image_for_detection.size(),CV_8UC3,cv::Scalar(0,0,0));
-    cv::Mat one(curent_image_for_detection.size(),CV_8UC3,cv::Scalar(255,255,255));
-    one.copyTo(zero,result);
-    curent_image_for_detection = zero.clone();
-}
-
 /** ********************************************************************************* **/
 /** **************************** Detection of circle ******************************** **/
 /** ********************************************************************************* **/
@@ -284,10 +243,10 @@ void circleDetection::ellipses_deletion()
 }
 
 /** ********************************************************************************* **/
-/** ************************* Exxtraction des pieces  ******************************* **/
+/** ************************* Extraction des pieces  ******************************** **/
 /** ********************************************************************************* **/
 
-void circleDetection::extraction(QDir Dir_extracted_coins)
+void circleDetection::clear_output(QDir Dir_extracted_coins)
 {
     // Clearing the output floder
     QFileInfoList fileList_extracted_coins;
@@ -296,14 +255,44 @@ void circleDetection::extraction(QDir Dir_extracted_coins)
     {
         Dir_extracted_coins.remove(fileList_extracted_coins[j].absoluteFilePath());
     }
+}
+
+void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_number)
+{
+    // Extract one coins in an output floder
+    cv::Mat extracted_coin;
+    extracted_coin = coin_image(cv::Rect(vector_coins[coin_number].center.x-vector_coins[coin_number].radius,
+                                         vector_coins[coin_number].center.y-vector_coins[coin_number].radius,
+                                         vector_coins[coin_number].radius*2,vector_coins[coin_number].radius*2));
+    std::string name_extracted_coin = "output/coin" + std::to_string(coin_number) + ".jpg";
+    cv::imwrite( name_extracted_coin, extracted_coin);
+}
+
+void circleDetection::extraction_square(QDir Dir_extracted_coins)
+{
+    clear_output(Dir_extracted_coins);
 
     // Extract each coins in an output floder
     for( unsigned int i = 0; i < vector_coins.size(); i++ )
     {
-        cv::Mat extracted_coin;
-        extracted_coin = initial_image_for_detection(cv::Rect(vector_coins[i].center.x-vector_coins[i].radius,vector_coins[i].center.y-vector_coins[i].radius,vector_coins[i].radius*2,vector_coins[i].radius*2));
-        std::string name_extracted_coin = "output/coin" + std::to_string(i) + ".jpg";
-        cv::imwrite( name_extracted_coin, extracted_coin);
+        extract_one_coin(initial_image_for_detection,i);
+    }
+}
+
+void circleDetection::extraction_circle(QDir Dir_extracted_coins)
+{
+    clear_output(Dir_extracted_coins);
+
+    // Extract each coins in an output floder
+    for( unsigned int i = 0; i < vector_coins.size(); i++ )
+    {
+        // Segmentation of the coin thanks to a mask
+        cv::Mat binary_mask(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
+        cv::circle(binary_mask, vector_coins[i].center, vector_coins[i].radius, cv::Scalar(255,255,255), CV_FILLED);
+        cv::Mat unique_coin_image(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
+        initial_image_for_detection.copyTo(unique_coin_image, binary_mask);
+
+        extract_one_coin(unique_coin_image,i);
     }
 }
 
@@ -356,13 +345,11 @@ void circleDetection::draw_contours(std::vector<std::vector<cv::Point> > contour
 }
 
 /** ********************************************************************************* **/
-/** ***************************** General Function  ********************************* **/
+/** **************************** General Functions  ********************************* **/
 /** ********************************************************************************* **/
 
-void circleDetection::detection(bool backGroundSeg, QDir Dir_extracted_coins)
+void circleDetection::detection()
 {
-    if(backGroundSeg)
-        backgroundSegmantation();
     preTreatment();
     if(method == 1)
         HoughDetection();
@@ -385,6 +372,16 @@ void circleDetection::detection(bool backGroundSeg, QDir Dir_extracted_coins)
 
     if(debug)
         draw_circles();
+}
 
-    extraction(Dir_extracted_coins);
+void circleDetection::extraction(QDir Dir_extracted_coins, int score_method)
+{
+    if(score_method == 3)
+    {
+        extraction_circle(Dir_extracted_coins);
+    }
+    else
+    {
+        extraction_square(Dir_extracted_coins);
+    }
 }

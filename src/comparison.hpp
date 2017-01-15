@@ -5,6 +5,7 @@
 #include <iterator>
 #include <iostream>
 #include <string>
+#include <cmath>
 
 #include <QFileDialog>
 #include <QFileInfo>
@@ -24,14 +25,14 @@
 class comparison
 {
 public:
-    comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat homographie_param, cv::Mat mask_param, int method_param, bool debug_param);
+    comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat H_param, cv::Mat mask_param, int method_param, bool debug_param);
 
     float compute_score(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches);
 
 private:
     cv::Mat img_extracted_coin;
     cv::Mat img_data;
-    cv::Mat homographie;
+    cv::Mat H;
     cv::Mat mask;
     int method;
     bool debug;
@@ -44,6 +45,8 @@ private:
 
     /** Compute score thanks to template matching  **/
     float get_templateMatching_score();
+    cv::Mat erase_background(cv::Mat input_image);
+
 };
 
 #endif // COMPARISON_HPP
