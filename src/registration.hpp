@@ -29,7 +29,7 @@ public:
     cv::Mat img_extracted_coin;
     cv::Mat img_data;
     void creation_image_extracted_coin(QString path);
-    void creation_image_data(QString path);
+    void creation_image_data(QString path, int size);
 
     std::vector<cv::KeyPoint> keypoints_extracted_coin;
     std::vector<cv::KeyPoint> keypoints_data;

@@ -15,9 +15,13 @@ void registration::creation_image_extracted_coin(QString path)
     img_extracted_coin = get_image(path);
 }
 
-void registration::creation_image_data(QString path)
+void registration::creation_image_data(QString path, int size)
 {
     img_data = get_image(path);
+    cv::Size newsize;
+    newsize.height = size;
+    newsize.width = size;
+    cv::resize(img_data,img_data,newsize);
 }
 
 cv::Mat registration::get_image(QString path)

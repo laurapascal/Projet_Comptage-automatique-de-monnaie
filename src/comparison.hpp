@@ -25,7 +25,7 @@
 class comparison
 {
 public:
-    comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat H_param, cv::Mat mask_param, int method_param, bool debug_param);
+    comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat H_param, cv::Mat mask_param, int method_param, int size, bool debug_param);
 
     float compute_score(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches);
 

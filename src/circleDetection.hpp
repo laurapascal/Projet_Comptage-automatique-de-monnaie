@@ -34,7 +34,7 @@ public:
     void detection();
 
     /** extraction of the found circles **/
-    void extraction(QDir Dir_extracted_coins, int score_method);
+    void extraction(QDir Dir_extracted_coins, int score_method, int size);
 
 private:
     int method;
@@ -65,9 +65,9 @@ private:
 
     /** Coin Extraction **/
     void clear_output(QDir Dir_extracted_coins);
-    void extract_one_coin(cv::Mat coin_image,unsigned int coin_number);
-    void extraction_square(QDir Dir_extracted_coins);
-    void extraction_circle(QDir Dir_extracted_coins);
+    void extract_one_coin(cv::Mat coin_image, unsigned int coin_number, int size);
+    void extraction_square(QDir Dir_extracted_coins, int size);
+    void extraction_circle(QDir Dir_extracted_coins, int size);
 
     /** Debug to draw circle **/
     void draw_circles();

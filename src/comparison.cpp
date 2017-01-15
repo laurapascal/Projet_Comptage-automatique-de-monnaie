@@ -1,12 +1,16 @@
 #include "comparison.hpp"
 
-comparison::comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat H_param, cv::Mat mask_param, int method_param, bool debug_param)
+comparison::comparison(QString img_extracted_coin_path, QString img_data_path, cv::Mat H_param, cv::Mat mask_param, int method_param,int size, bool debug_param)
     :H(H_param), mask(mask_param), method(method_param), debug(debug_param)
 {
     img_extracted_coin = cv::imread( img_extracted_coin_path.toStdString(), 1 );
     assert(img_extracted_coin.data);
     img_data = cv::imread( img_data_path.toStdString(), 1 );
     assert(img_data.data);
+    cv::Size newsize;
+    newsize.height = size;
+    newsize.width = size;
+    cv::resize(img_data,img_data,newsize);
 }
 
 float comparison::compute_score(std::vector<cv::KeyPoint> keypoints, std::vector< cv::DMatch > matches)
