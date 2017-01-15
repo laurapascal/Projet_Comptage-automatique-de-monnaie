@@ -64,10 +64,10 @@ std::vector<cv::KeyPoint> registration::get_keypoints_Sift(cv::Mat img)
 
     //-- Detect the keypoints using SIFT Detector
     int nfeatures = 4000;
-    int nOctaveLayers = 3;
-    double contrastThreshold = 0.04;
-    double edgeThreshold = 10;
-    double sigma = 1.0;
+    int nOctaveLayers = 5;
+    double contrastThreshold = 0.005;
+    double edgeThreshold = 20;
+    double sigma = 5.0;
     cv::SiftFeatureDetector detector(nfeatures, nOctaveLayers, contrastThreshold, edgeThreshold, sigma);
 
     detector.detect(img, keypoints);
@@ -80,8 +80,8 @@ std::vector<cv::KeyPoint> registration::get_keypoints_Surf(cv::Mat img)
     std::vector<cv::KeyPoint> keypoints;
 
     int minHessian = 300;
-    int nOctaves = 4;
-    int nOctaveLayers = 2;
+    int nOctaves = 2;
+    int nOctaveLayers = 5;
     bool extended = true;
     bool upright = false;
     cv::SurfFeatureDetector detector(minHessian, nOctaves, nOctaveLayers, extended, upright);
@@ -98,7 +98,7 @@ std::vector<cv::KeyPoint> registration::get_keypoints_ORB(cv::Mat img)
     int nfeatures = 4000;
     float scaleFactor = 1.2f;
     int nlevels = 8;
-    int edgeThreshold = 31;
+    int edgeThreshold = 50;
     int firstLevel = 0;
     int WTA_K = 4;
     int scoreType = cv::ORB::HARRIS_SCORE;

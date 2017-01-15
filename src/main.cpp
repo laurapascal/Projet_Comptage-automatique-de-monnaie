@@ -23,7 +23,7 @@
 int detection_method = 1;
 QString database_folder_path = "Test_DataBase";
 QString extracted_coin_folder_path = "output";
-std::string algorithm_features_detection = "sift";
+std::string algorithm_features_detection = "orb";
 std::string algorithm_matcher = "BF";
 int score_method = 1;
 bool debug_circleDetection = false;
@@ -194,8 +194,8 @@ void usage_executable(char **argv)
     std::cout<<"\t\t 1: compute the score with the number of inliers found"<<std::endl;
     std::cout<<"\t\t 2: add of a weighting compute with the repartition of the inliers found"<<std::endl;
     std::cout<<"\t\t 3: compute the score with template matching"<<std::endl;
-    std::cout<<"\t--size: <int> size used for the resize (of the database and the extracted coins) before the comparaison: between 250 and 1000"<<std::endl;
-    std::cout<<"\nOption Values by default: --database Test_DataBase --detection 1 --features_detection sift --matcher BF --debug false --score 1 --size 250"<<std::endl;
+    std::cout<<"\t--size: <int> size used for the resize (of the database and the extracted coins) before the comparison: between 250 and 1000"<<std::endl;
+    std::cout<<"\nOption Values by default: --database Test_DataBase --detection 1 --features_detection orb --matcher BF --debug none --score 1 --size 250"<<std::endl;
 
 }
 
