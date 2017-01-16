@@ -201,6 +201,7 @@ void usage_executable(char **argv)
 
 int coin_value_detection()
 {
+    double amount = 0;
     database db(database_folder_path);
     registration rg(algorithm_features_detection, algorithm_matcher, debug_registration);
     QDir Dir_extracted_coins(extracted_coin_folder_path);
@@ -246,13 +247,17 @@ int coin_value_detection()
                std::cout<<"The score is: "<<score_temp<<std::endl;
         }
         if(!result_value_coin.empty())
+        {
             std::cout<<"The value of the detected coin is: "<<result_value_coin<<" with a score of "<<score<<std::endl;
+            amount += db.get_value_data(result_value_coin);
+        }
         else
         {
             std::cout<<"The value of the detected coin wasn't found! There is maybe something wrong with your database! "<<std::endl;
             exit(0);
         }
     }
+    std::cout<<"The total amount is: "<<amount<<"€"<<std::endl;
 
     cv::waitKey(0);
     return 0;

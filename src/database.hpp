@@ -18,7 +18,7 @@ public:
     QString path_database;
     std::map<QString,std::string> map_data;
 
-
+    double get_value_data(std::string v);
 };
 
 #endif // DATABASE_H

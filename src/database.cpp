@@ -31,6 +31,18 @@ database::database(QString path_database_param)
             map_data[data_path] = data_value;
         }
     }
-
 }
+
+double database::get_value_data(std::string v)
+{
+    if(v[1] == 'c' || v[1] == 'C')
+        return (atoi(&v[0]))/100.0;
+    else if(v[2] == 'c' || v[2] == 'C')
+        return (atoi(&v[1])*10 + atoi(&v[0]))/100.0;
+    else if(v[1] == 'e' || v[1] == 'E')
+        return atoi(&v[0]);
+
+    return 0;
+}
+
 
