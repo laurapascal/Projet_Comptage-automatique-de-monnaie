@@ -21,8 +21,11 @@ void circleDetection::preTreatment()
     }
     if(method == 2)
     {
-        thresholding();
         gray_conversion();
+        thresholding();
+        int morph_size = 8;
+        cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size ) );
+        cv::morphologyEx( curent_image_for_detection, curent_image_for_detection, cv::MORPH_OPEN,  element);
     }
 
 }
@@ -49,7 +52,7 @@ void circleDetection::thresholding()
             sum += (unsigned int)curent_image_for_detection.at<uchar>(r,c);
         }
     }
-    int thresh = 0.99*(sum / (curent_image_for_detection.rows * curent_image_for_detection.cols));
+    int thresh = 0.85*(sum / (curent_image_for_detection.rows * curent_image_for_detection.cols));
 
     // Detect edges using Threshold
     cv::threshold( curent_image_for_detection, curent_image_for_detection, thresh, 255, cv::THRESH_BINARY );
@@ -106,14 +109,19 @@ void circleDetection::ContourDetection()
 
 
     // Find the rotated ellipses for each contour
+    std::vector<std::vector<cv::Point> > contours2;
+
     for( unsigned int i = 0; i < contours.size(); i++ )
     {
         if( contours[i].size() > (curent_image_for_detection.rows + curent_image_for_detection.cols)/40 )
+        {
             ellipses.push_back(fitEllipse( cv::Mat(contours[i]) ));
+            contours2.push_back(contours[i]);
+        }
     }
 
     if(debug)
-        draw_ellipses();
+        draw_ellipses(contours2);
 }
 
 /** ********************************************************************************* **/
@@ -322,16 +330,127 @@ void circleDetection::draw_circles()
     cv::waitKey(0);
 }
 
-void circleDetection::draw_ellipses()
+void circleDetection::draw_ellipses(std::vector<std::vector<cv::Point> > contours)
 {
-    cv::Mat im;
-    im=initial_image_for_detection.clone();
+    cv::Mat im = initial_image_for_detection.clone();;
+    std::vector<std::vector<cv::Point> > vec_point;
+    std::vector<cv::RotatedRect> good_ellipses;
+
     for( size_t i = 0; i< ellipses.size(); i++ )
     {
-        cv::ellipse( im, ellipses[i], cv::Scalar(0,0,255), 3, 8 );
+        bool good_ellipse = true;
+
+        // draw ellipses
+        cv::RotatedRect ellipse = ellipses[i];
+        cv::ellipse( im, ellipse, cv::Scalar(0,255,0), 3, 8 );
+
+        // draw contours
+        cv::drawContours( im, contours, (int)i, cv::Scalar(255,0,0), 3, 8);
+        std::vector<cv::Point> contour = contours[i];
+
+        // draw ellipses points by points
+        std::vector<cv::Point> points;
+        cv::Size2f size_ellipse(ellipse.size.width/2,ellipse.size.height/2);
+        cv::ellipse2Poly(ellipse.center, size_ellipse, ellipse.angle, 0, 360, 1, points);
+        vec_point.push_back(points);
+        cv::drawContours( im, vec_point, (int)i, cv::Scalar(0,0,255), 3, 8);
+
+        // Define if the ellipse is close to the contours
+//        for(unsigned int j = 0; j < points.size(); j++)
+//        {
+//            bool good_point = false;
+//            for(unsigned int k =0; k < contour.size(); k++)
+//            {
+//                if(std::fabs(points[j].x - contour[k].x) < 15 && std::fabs(points[j].y - contour[k].y) < 15)
+//                {
+//                    good_point = true;
+//                }
+//            }
+
+//            if(!good_point)
+//            {
+//                good_ellipse = false;
+//                break;
+//            }
+
+//        }
+//        if(good_ellipse)
+//        {
+            good_ellipses.push_back(ellipse);
+//        }
     }
     imshow( "Ellipses detection", im );
     cv::waitKey(0);
+    std::cout<<good_ellipses.size()<<std::endl;
+
+    cv::Mat im_good_ellipse2 = initial_image_for_detection.clone();
+    for( size_t i = 0; i < good_ellipses.size(); i++ )
+    {
+        cv::RotatedRect ellipse = good_ellipses[i];
+
+        cv::ellipse( im_good_ellipse2, ellipse, cv::Scalar(255,255,0), 3, 8 );
+        cv::rectangle(im_good_ellipse2, ellipse.boundingRect(), cv::Scalar(255,0,255), 3, 8 );
+
+    }
+    imshow( "Ellipses detection before post-treatmnt", im_good_ellipse2 );
+    cv::waitKey(0);
+
+    // Post-treatment
+    for( size_t i = 0; i < good_ellipses.size(); i++ )
+    {
+        cv::RotatedRect ellipse = good_ellipses[i];
+        cv::Point2f vertex[4];
+        ellipse.points(vertex);
+//        std::cout<<"i "<<i<<std::endl;
+        for( size_t j = 0; j < good_ellipses.size(); j++ )
+        {
+//            std::cout<<"j "<<j<<std::endl;
+
+//            cv::Mat im_step = initial_image_for_detection.clone();
+
+
+            cv::RotatedRect ellipse_temp = good_ellipses[j];
+            cv::Point2f vertex_temp[4];
+            ellipse_temp.points(vertex_temp);
+            bool is_included = true;
+            if( ellipse_temp.center != ellipse.center &&   ellipse_temp.angle != ellipse.angle && ellipse_temp.size != ellipse.size)
+            {
+                for(int k = 0; k < 4; k++)
+                {
+                    if(!(ellipse.boundingRect().contains(vertex_temp[k])))
+                    {
+                        is_included = false;
+                    }
+                }
+                if(is_included)
+                {
+                    std::cout<<"suppression"<<std::endl;
+                    good_ellipses.erase(good_ellipses.begin() + j);
+                    j--;
+                }
+            }
+
+//            cv::ellipse( im_step, ellipse, cv::Scalar(255,255,0), 3, 8 );
+//            cv::ellipse( im_step, ellipse_temp, cv::Scalar(0,255,255), 3, 8 );
+//            cv::rectangle(im_step, ellipse.boundingRect(), cv::Scalar(255,0,255), 3, 8 );
+//            cv::rectangle(im_step, ellipse_temp.boundingRect(), cv::Scalar(255,255,255), 3, 8 );
+//            imshow( "Etapes", im_step );
+//            cv::waitKey(0);
+        }
+    }
+    std::cout<<good_ellipses.size()<<std::endl;
+
+    cv::Mat im_good_ellipse = initial_image_for_detection.clone();;
+    for( size_t i = 0; i < good_ellipses.size(); i++ )
+    {
+        cv::RotatedRect ellipse = good_ellipses[i];
+
+        cv::ellipse( im_good_ellipse, ellipse, cv::Scalar(255,255,0), 3, 8 );
+
+    }
+    imshow( "Ellipses detection after post-treatmnt", im_good_ellipse );
+    cv::waitKey(0);
+
 }
 
 void circleDetection::draw_contours(std::vector<std::vector<cv::Point> > contours)

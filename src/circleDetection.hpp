@@ -73,7 +73,7 @@ private:
     void draw_circles();
 
     /** Debug to draw ellipses **/
-    void draw_ellipses();
+    void draw_ellipses(std::vector<std::vector<cv::Point> > contours);
 
     /** Debug to draw ellipses **/
     void draw_contours(std::vector<std::vector<cv::Point> > contours);
