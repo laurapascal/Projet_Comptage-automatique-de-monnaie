@@ -63,7 +63,6 @@ private:
     void post_treatment();
     void circle_store();
     void ellipse_store();
-    void ellipse_to_circle_store();
     void deleting_circles_outside_the_image();
     void deleting_ellipses_outside_the_image();
     void circle_deletion();

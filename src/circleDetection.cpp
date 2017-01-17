@@ -127,28 +127,16 @@ void circleDetection::post_treatment()
         deleting_circles_outside_the_image();
         circle_deletion();
         nb_detected_coin = circles.size();
+        if(debug)
+            draw_circles();
     }
-    else // method = 2 or method = 3
+    else // method = 2
     {
         ellipse_store();
         deleting_ellipses_outside_the_image();
-        ellipses_deletion();
-        if(method == 2)
-        {
-            nb_detected_coin = ellipses.size();
-        }
-        else
-        {
-            ellipse_to_circle_store();
-            nb_detected_coin = circles.size();
-        }
-    }
-    // debug
-    if(debug)
-    {
-        if(method == 1 || method == 3)
-            draw_circles();
-        else
+        ellipses_deletion();       
+        nb_detected_coin = ellipses.size();
+        if(debug)
             draw_ellipses();
     }
 }
@@ -173,22 +161,6 @@ void circleDetection::ellipse_store()
         if( contours[i].size() > (curent_image_for_detection.rows + curent_image_for_detection.cols)/40 )
         {
             ellipses.push_back(fitEllipse( cv::Mat(contours[i]) ));
-        }
-    }
-}
-
-void circleDetection::ellipse_to_circle_store()
-{
-    // IF the ellipse is a circle THEN the ellipse is stored
-    for( unsigned int i = 0; i < ellipses.size(); i++ )
-    {
-        cv::RotatedRect ellipse = ellipses[i];
-        if(std::fabs(ellipse.size.width - ellipse.size.height) < (ellipse.size.width + ellipse.size.height)/20)
-        {
-            circle detected_circle;
-            detected_circle.center = ellipse.center;
-            detected_circle.radius = (ellipse.size.width + ellipse.size.height)/4;
-            circles.push_back(detected_circle);
         }
     }
 }
@@ -368,7 +340,6 @@ void circleDetection::draw_circles()
 
     for( size_t i = 0; i < circles.size(); i++ )
     {
-
         // Draw the circles
         // circle center
         cv::circle( im, circles[i].center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
@@ -391,7 +362,6 @@ void circleDetection::draw_ellipses()
     }
     imshow( "Ellipses detection", im );
     cv::waitKey(0);
-
 }
 
 void circleDetection::draw_contours()
@@ -418,21 +388,9 @@ void circleDetection::detection()
     {
         HoughDetection();
     }
-    else if(method == 2)
+    else // method = 2
     {
         ContourDetection();
-    }
-    if(method == 3)
-    {
-        method = 1;
-        preTreatment();
-        HoughDetection();
-        post_treatment();
-        curent_image_for_detection = initial_image_for_detection.clone();
-        method = 2;
-        preTreatment();
-        ContourDetection();
-        method = 3;
     }
     post_treatment();
 }
