@@ -157,7 +157,7 @@ int main(int argc, char** argv)
     circleDetection detection(argv[1], detection_method, debug_circleDetection);
     detection.detection();
     detection.extraction(Dir_extracted_coins, score_method, size);
-    std::cout<<"Number of detected coin: "<<detection.vector_coins.size()<<std::endl;
+    std::cout<<"Number of detected coin: "<<detection.nb_detected_coin<<std::endl;
 
 
     /** ********************************************************************************* **/
