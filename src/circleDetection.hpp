@@ -70,9 +70,11 @@ private:
 
     /** Coin Extraction **/
     void clear_output(QDir Dir_extracted_coins);
-    void extract_one_coin(cv::Mat coin_image, unsigned int coin_number, int size);
-    void extraction_square(int size);
+    void extract_one_coin(cv::Mat coin_image, unsigned int coin_number, int size, cv::Rect rect);
+    void extraction_circle_in_square(int size);
+    void extraction_ellipse_in_square(int size);
     void extraction_circle(int size);
+    void extraction_ellipse(int size);
 
     /** Debug to draw circle **/
     void draw_circles();

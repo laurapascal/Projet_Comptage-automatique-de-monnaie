@@ -289,13 +289,11 @@ void circleDetection::clear_output(QDir Dir_extracted_coins)
     }
 }
 
-void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_number, int size)
+void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_number, int size, cv::Rect rect)
 {
     // Extract one coins in an output floder
     cv::Mat extracted_coin;
-    extracted_coin = coin_image(cv::Rect(circles[coin_number].center.x-circles[coin_number].radius,
-                                         circles[coin_number].center.y-circles[coin_number].radius,
-                                         circles[coin_number].radius*2,circles[coin_number].radius*2));
+    extracted_coin = coin_image(rect);
     std::string name_extracted_coin = "output/coin" + std::to_string(coin_number) + ".jpg";
     cv::Size newsize;
     newsize.height = size;
@@ -304,12 +302,27 @@ void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_num
     cv::imwrite( name_extracted_coin, extracted_coin);
 }
 
-void circleDetection::extraction_square(int size)
+void circleDetection::extraction_circle_in_square(int size)
 {
     // Extract each coins in an output floder
     for( unsigned int i = 0; i < circles.size(); i++ )
     {
-        extract_one_coin(initial_image_for_detection, i, size);
+        cv::Rect rect(circles[i].center.x-circles[i].radius,
+                      circles[i].center.y-circles[i].radius,
+                      circles[i].radius*2,circles[i].radius*2);
+
+        extract_one_coin(initial_image_for_detection, i, size, rect);
+    }
+}
+
+void circleDetection::extraction_ellipse_in_square(int size)
+{
+    // Extract each coins in an output floder
+    for( unsigned int i = 0; i < ellipses.size(); i++ )
+    {
+        cv::Rect rect = ellipses[i].boundingRect();
+
+        extract_one_coin(initial_image_for_detection, i, size, rect);
     }
 }
 
@@ -325,7 +338,29 @@ void circleDetection::extraction_circle(int size)
         cv::Mat unique_coin_image(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
         initial_image_for_detection.copyTo(unique_coin_image, binary_mask);
 
-        extract_one_coin(unique_coin_image, i, size);
+        cv::Rect rect(circles[i].center.x-circles[i].radius,
+                      circles[i].center.y-circles[i].radius,
+                      circles[i].radius*2,circles[i].radius*2);
+
+        extract_one_coin(unique_coin_image, i, size, rect);
+    }
+}
+
+void circleDetection::extraction_ellipse(int size)
+{
+
+    // Extract each coins in an output floder
+    for( unsigned int i = 0; i < ellipses.size(); i++ )
+    {
+        // Segmentation of the coin thanks to a mask
+        cv::Mat binary_mask(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
+        cv::ellipse(binary_mask, ellipses[i], cv::Scalar(255,255,255), CV_FILLED);
+        cv::Mat unique_coin_image(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
+        initial_image_for_detection.copyTo(unique_coin_image, binary_mask);
+
+        cv::Rect rect = ellipses[i].boundingRect();
+
+        extract_one_coin(unique_coin_image, i, size, rect);
     }
 }
 
@@ -401,10 +436,16 @@ void circleDetection::extraction(QDir Dir_extracted_coins, int score_method, int
 
     if(score_method == 3)
     {
-        extraction_circle(size);
+        if(method == 1)
+            extraction_circle(size);
+        else // 2
+            extraction_ellipse(size);
     }
-    else
+    else // score method = 1 or 2
     {
-        extraction_square(size);
+        if(method == 1)
+            extraction_circle_in_square(size);
+        else
+            extraction_ellipse_in_square(size);
     }
 }
