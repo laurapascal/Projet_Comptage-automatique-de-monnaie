@@ -64,7 +64,7 @@ void circleDetection::thresholding()
 
 void circleDetection::opening()
 {
-    int morph_size = 8;
+    int morph_size = 5;
     cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size ) );
     cv::morphologyEx( curent_image_for_detection, curent_image_for_detection, cv::MORPH_OPEN,  element);
 
@@ -260,10 +260,11 @@ void circleDetection::ellipses_deletion()
                 {
 //                    std::cout<<"supression"<<std::endl;
                     ellipses.erase(ellipses.begin() + j);
-                    j--;
+                    j = 0;
+                    i = 0;
+                    break;
                 }
             }
-
 //            cv::ellipse( im_step, ellipse, cv::Scalar(255,255,0), 3, 8 );
 //            cv::ellipse( im_step, ellipse_temp, cv::Scalar(0,255,255), 3, 8 );
 //            cv::rectangle(im_step, ellipse.boundingRect(), cv::Scalar(255,0,255), 3, 8 );
