@@ -261,7 +261,7 @@ void circleDetection::ellipses_deletion()
 //                    std::cout<<"supression"<<std::endl;
                     ellipses.erase(ellipses.begin() + j);
                     j = 0;
-                    i = 0;
+                    i = -1;
                     break;
                 }
             }
@@ -323,6 +323,26 @@ void circleDetection::extraction_ellipse_in_square(int size)
     {
         cv::Rect rect = ellipses[i].boundingRect();
 
+        // Checking if the bounding box belongs to the image
+        if(0 > rect.x)
+        {
+            rect.width = rect.x + rect.width;
+            rect.x = 0;
+        }
+        if(0 > rect.y)
+        {
+            rect.height = rect.y + rect.height;
+            rect.y = 0;
+        }
+        if((rect.x + rect.width) > initial_image_for_detection.cols)
+        {
+            rect.width = initial_image_for_detection.cols - rect.x ;
+        }
+        if((rect.y + rect.height) > initial_image_for_detection.rows)
+        {
+            rect.height = initial_image_for_detection.rows - rect.y ;
+        }
+
         extract_one_coin(initial_image_for_detection, i, size, rect);
     }
 }
@@ -361,6 +381,25 @@ void circleDetection::extraction_ellipse(int size)
 
         cv::Rect rect = ellipses[i].boundingRect();
 
+        // Checking if the bounding box belongs to the image
+        if(0 > rect.x)
+        {
+            rect.width = rect.x + rect.width;
+            rect.x = 0;
+        }
+        if(0 > rect.y)
+        {
+            rect.height = rect.y + rect.height;
+            rect.y = 0;
+        }
+        if((rect.x + rect.width) > initial_image_for_detection.cols)
+        {
+            rect.width = initial_image_for_detection.cols - rect.x ;
+        }
+        if((rect.y + rect.height) > initial_image_for_detection.rows)
+        {
+            rect.height = initial_image_for_detection.rows - rect.y ;
+        }
         extract_one_coin(unique_coin_image, i, size, rect);
     }
 }
