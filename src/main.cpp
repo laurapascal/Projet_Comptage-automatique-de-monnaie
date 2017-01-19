@@ -21,7 +21,7 @@
 #include "comparison.hpp"
 
 int detection_method = 2;
-QString database_folder_path = "Test_DataBase";
+QString database_folder_path = "DataBase1000";
 QString extracted_coin_folder_path = "output";
 std::string algorithm_features_detection = "orb";
 std::string algorithm_matcher = "BF";
