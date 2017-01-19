@@ -20,7 +20,7 @@
 #include "circleDetection.hpp"
 #include "comparison.hpp"
 
-int detection_method = 1;
+int detection_method = 2;
 QString database_folder_path = "Test_DataBase";
 QString extracted_coin_folder_path = "output";
 std::string algorithm_features_detection = "orb";
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         }
         else if(!strcmp(argv[i],"--detection"))
         {
-            if(std::atoi(argv[i + 1]) != 1 && std::atoi(argv[i + 1]) != 2 && std::atoi(argv[i + 1]) != 3)
+            if(std::atoi(argv[i + 1]) != 1 && std::atoi(argv[i + 1]) != 2)
             {
                 usage_executable(argv); exit(0);
             }
@@ -157,7 +157,7 @@ int main(int argc, char** argv)
     circleDetection detection(argv[1], detection_method, debug_circleDetection);
     detection.detection();
     detection.extraction(Dir_extracted_coins, score_method, size);
-    std::cout<<"Number of detected coin: "<<detection.vector_coins.size()<<std::endl;
+    std::cout<<"Number of detected coin: "<<detection.nb_detected_coin<<std::endl;
 
 
     /** ********************************************************************************* **/
@@ -179,9 +179,8 @@ void usage_executable(char **argv)
     std::cout<<"Option:"<<std::endl;
     std::cout<<"\t--database: <std::string> database folder path"<<std::endl;
     std::cout<<"\t--detection: <int> detection method number: 1, 2 or 3"<<std::endl;
-    std::cout<<"\t\t 1: detection thanks to Hought transform"<<std::endl;
-    std::cout<<"\t\t 2: detection thanks to threshold and contour detection"<<std::endl;
-    std::cout<<"\t\t 3: detection thanks to method 1 and 2"<<std::endl;
+    std::cout<<"\t\t 1: detection of circles thanks to Hough transform"<<std::endl;
+    std::cout<<"\t\t 2: detection of circles or ellipses thanks to threshold and contour detection"<<std::endl;
     std::cout<<"\t--features_detection: <std::string> features detection algorithm: 'sift' ,'surf' or 'orb'"<<std::endl;
     std::cout<<"\t--matcher: <std::string> matcher algorithm: 'flann' or 'BF'"<<std::endl;
     std::cout<<"\t--debug: <std::string> display debug images: 'all', 'none', '1', '2', or '3'"<<std::endl;
@@ -195,8 +194,7 @@ void usage_executable(char **argv)
     std::cout<<"\t\t 2: add of a weighting compute with the repartition of the inliers found"<<std::endl;
     std::cout<<"\t\t 3: compute the score with template matching"<<std::endl;
     std::cout<<"\t--size: <int> size used for the resize (of the database and the extracted coins) before the comparison: between 250 and 1000"<<std::endl;
-    std::cout<<"\nOption Values by default: --database DataBase1000 --detection 1 --features_detection orb --matcher BF --debug none --score 1 --size 250"<<std::endl;
-
+    std::cout<<"\nOption Values by default: --database DataBase1000 --detection 2 --features_detection orb --matcher BF --debug none --score 1 --size 250"<<std::endl;
 }
 
 int coin_value_detection()

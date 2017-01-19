@@ -21,10 +21,10 @@ void circleDetection::preTreatment()
     }
     if(method == 2)
     {
-        thresholding();
         gray_conversion();
+        thresholding();
+        opening();
     }
-
 }
 
 void circleDetection::addBlur()
@@ -49,7 +49,7 @@ void circleDetection::thresholding()
             sum += (unsigned int)curent_image_for_detection.at<uchar>(r,c);
         }
     }
-    int thresh = 0.99*(sum / (curent_image_for_detection.rows * curent_image_for_detection.cols));
+    int thresh = 0.85*(sum / (curent_image_for_detection.rows * curent_image_for_detection.cols));
 
     // Detect edges using Threshold
     cv::threshold( curent_image_for_detection, curent_image_for_detection, thresh, 255, cv::THRESH_BINARY );
@@ -58,6 +58,20 @@ void circleDetection::thresholding()
     if(debug)
     {
         imshow( "Thresholding before applying the 2nd circles detection method", curent_image_for_detection );
+        cv::waitKey(0);
+    }
+}
+
+void circleDetection::opening()
+{
+    int morph_size = 5;
+    cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size ) );
+    cv::morphologyEx( curent_image_for_detection, curent_image_for_detection, cv::MORPH_OPEN,  element);
+
+    //Display of opening for debug
+    if(debug)
+    {
+        imshow( "Opening before applying the 2nd circles detection method", curent_image_for_detection );
         cv::waitKey(0);
     }
 }
@@ -90,30 +104,16 @@ void circleDetection::HoughDetection()
     // param_2 = 60*: Threshold for center detection.
     // min_radius = 0: Minimum radio to be detected. If unknown, put zero as default.
     // max_radius = 0: Maximum radius to be detected. If unknown, put zero as default.
-
-    cv::HoughCircles( curent_image_for_detection, circles, CV_HOUGH_GRADIENT, 1, curent_image_for_detection.rows/20, 80, 60, 0, 0);
+    cv::HoughCircles( curent_image_for_detection, hough_circles, CV_HOUGH_GRADIENT, 1, curent_image_for_detection.rows/20, 80, 60, 0, 0);
 }
 
 void circleDetection::ContourDetection()
 {
     // Find contours
-    std::vector<std::vector<cv::Point> > contours;
-
     cv::findContours( curent_image_for_detection, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 
     if(debug)
-        draw_contours(contours);
-
-
-    // Find the rotated ellipses for each contour
-    for( unsigned int i = 0; i < contours.size(); i++ )
-    {
-        if( contours[i].size() > (curent_image_for_detection.rows + curent_image_for_detection.cols)/40 )
-            ellipses.push_back(fitEllipse( cv::Mat(contours[i]) ));
-    }
-
-    if(debug)
-        draw_ellipses();
+        draw_contours();
 }
 
 /** ********************************************************************************* **/
@@ -122,61 +122,86 @@ void circleDetection::ContourDetection()
 void circleDetection::post_treatment()
 {
     if(method == 1)
+    {
         circle_store();
-    else // 2
-        ellipse_store();
-    deleting_circles_outside_the_image();
-    if(method == 1)
+        deleting_circles_outside_the_image();
         circle_deletion();
-    else // 2
-        ellipses_deletion();
+        nb_detected_coin = circles.size();
+        if(debug)
+            draw_circles();
+    }
+    else // method = 2
+    {
+        ellipse_store();
+        deleting_ellipses_outside_the_image();
+        ellipses_deletion();       
+        nb_detected_coin = ellipses.size();
+        if(debug)
+            draw_ellipses();
+    }
 }
 
 void circleDetection::circle_store()
 {
-    for( size_t i = 0; i < circles.size(); i++ )
+    for( size_t i = 0; i < hough_circles.size(); i++ )
     {
-        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        int radius = cvRound(circles[i][2]);
-        coin coin_detected;
-        coin_detected.center = center;
-        coin_detected.radius = radius;
-        vector_coins.push_back(coin_detected);
+        cv::Point center(cvRound(hough_circles[i][0]), cvRound(hough_circles[i][1]));
+        int radius = cvRound(hough_circles[i][2]);
+        circle detected_circle;
+        detected_circle.center = center;
+        detected_circle.radius = radius;
+        circles.push_back(detected_circle);
     }
 }
-
 void circleDetection::ellipse_store()
 {
-    // IF the ellipse is a circle THEN the ellipse is stored
-    for( unsigned int i = 0; i < ellipses.size(); i++ )
+    // Find the rotated ellipses for each contour
+    for( unsigned int i = 0; i < contours.size(); i++ )
     {
-        cv::RotatedRect ellipse = ellipses[i];
-        if(std::fabs(ellipse.size.width - ellipse.size.height) < (ellipse.size.width + ellipse.size.height)/20)
+        if( contours[i].size() > (curent_image_for_detection.rows + curent_image_for_detection.cols)/40 )
         {
-            coin coin_detected;
-            coin_detected.center = ellipse.center;
-            coin_detected.radius = (ellipse.size.width + ellipse.size.height)/4;
-            vector_coins.push_back(coin_detected);
+            ellipses.push_back(fitEllipse( cv::Mat(contours[i]) ));
         }
-
     }
 }
 
+// Deletion of circles outside the image
 void circleDetection::deleting_circles_outside_the_image()
 {
-    for( unsigned int i = 0; i < vector_coins.size(); i++ )
+    for( unsigned int i = 0; i < circles.size(); i++ )
     {
-        coin coin_detected = vector_coins[i];
+        circle circle_detected = circles[i];
 
-        if(coin_detected.radius > coin_detected.center.x || coin_detected.center.x > (initial_image_for_detection.cols - coin_detected.radius))
+        if(circle_detected.radius > circle_detected.center.x || circle_detected.center.x > (initial_image_for_detection.cols - circle_detected.radius))
         {
-            vector_coins.erase(vector_coins.begin() + i);
+            circles.erase(circles.begin() + i);
             i--;
         }
-        else if(coin_detected.radius > coin_detected.center.y || coin_detected.center.y > (initial_image_for_detection.rows - coin_detected.radius))
+        else if(circle_detected.radius > circle_detected.center.y || circle_detected.center.y > (initial_image_for_detection.rows - circle_detected.radius))
         {
-            vector_coins.erase(vector_coins.begin() + i);
+            circles.erase(circles.begin() + i);
             i--;
+        }
+    }
+}
+
+// Deletion of ellipses outside the image
+void circleDetection::deleting_ellipses_outside_the_image()
+{
+    for( size_t i = 0; i < ellipses.size(); i++ )
+    {
+        cv::RotatedRect ellipse = ellipses[i];
+        std::vector<cv::Point> ellipse_points;
+        cv::Size2f size_ellipse(ellipse.size.width/2,ellipse.size.height/2);
+        cv::ellipse2Poly(ellipse.center, size_ellipse, ellipse.angle, 0, 360, 1, ellipse_points);
+        for(unsigned int k = 0; k < ellipse_points.size(); k++)
+        {
+            if(0 > ellipse_points[k].x || ellipse_points[k].x > initial_image_for_detection.cols || 0 > ellipse_points[k].y || ellipse_points[k].y > initial_image_for_detection.rows)
+            {
+                ellipses.erase(ellipses.begin() + i);
+                i--;
+                break;
+            }
         }
     }
 }
@@ -185,19 +210,19 @@ void circleDetection::deleting_circles_outside_the_image()
 void circleDetection::circle_deletion()
 {
     /// Treatement of the found circles
-    for( size_t i = 0; i < vector_coins.size(); i++ )
+    for( size_t i = 0; i < circles.size(); i++ )
     {
-        cv::Point center = vector_coins[i].center;
-        int radius = vector_coins[i].radius;
+        cv::Point center = circles[i].center;
+        int radius = circles[i].radius;
 
         for ( unsigned int j = 0; j < i; j++)
         {
-            cv::Point center_temp = vector_coins[j].center;
-            int radius_temp = vector_coins[j].radius;
+            cv::Point center_temp = circles[j].center;
+            int radius_temp = circles[j].radius;
 
             if(std::sqrt((center.x-center_temp.x)*(center.x-center_temp.x) + (center.y-center_temp.y)*(center.y-center_temp.y)) < (radius+radius_temp))
             {
-                vector_coins.erase(vector_coins.begin() + i);
+                circles.erase(circles.begin() + i);
                 i--;
                 break;
             }
@@ -205,38 +230,47 @@ void circleDetection::circle_deletion()
     }
 }
 
-// IF the circle is in an other circle THEN the circle is deleted
+// IF a ellipse is in an other ellipse THEN the ellipse is deleted
 void circleDetection::ellipses_deletion()
 {
-    for( unsigned int i = 0; i < vector_coins.size(); i++ )
+    for( size_t i = 0; i < ellipses.size(); i++ )
     {
-        float radius = vector_coins[i].radius;
-        cv::Point center = vector_coins[i].center;
-        for( unsigned int j = 0; j < vector_coins.size(); j++ )
+        cv::RotatedRect ellipse = ellipses[i];
+
+        for( size_t j = 0; j < ellipses.size(); j++ )
         {
+//            cv::Mat im_step = initial_image_for_detection.clone();
 
-            float radius_temp = vector_coins[j].radius;
-            cv::Point center_temp = vector_coins[j].center;
-            if(i!=j)
+            cv::RotatedRect ellipse_temp = ellipses[j];
+            std::vector<cv::Point> ellipse_points;
+            cv::Size2f size_ellipse(ellipse_temp.size.width/2,ellipse_temp.size.height/2);
+            cv::ellipse2Poly(ellipse_temp.center, size_ellipse, ellipse_temp.angle, 0, 360, 1, ellipse_points);
+
+            bool is_included = true;
+            if( ellipse_temp.center != ellipse.center &&   ellipse_temp.angle != ellipse.angle && ellipse_temp.size != ellipse.size)
             {
-                if(std::sqrt((center.x-center_temp.x)*(center.x-center_temp.x) + (center.y-center_temp.y)*(center.y-center_temp.y)) < (radius + radius_temp))
+                for(unsigned int k = 0; k < ellipse_points.size(); k++)
                 {
-                    if(radius > radius_temp)
+                    if((std::pow(((ellipse_points[k].x - ellipse.center.x )/ellipse.size.width),2) + std::pow(((ellipse_points[k].y - ellipse.center.y )/ellipse.size.height),2)) > 1)
                     {
-                        vector_coins.erase(vector_coins.begin() + j);
-                        j--;
-                        break;
+                        is_included = false;
                     }
-
-                    else
-                    {
-                        vector_coins.erase(vector_coins.begin() + i);
-                        i--;
-                        break;
-                    }
-
+                }
+                if(is_included)
+                {
+//                    std::cout<<"supression"<<std::endl;
+                    ellipses.erase(ellipses.begin() + j);
+                    j = 0;
+                    i = -1;
+                    break;
                 }
             }
+//            cv::ellipse( im_step, ellipse, cv::Scalar(255,255,0), 3, 8 );
+//            cv::ellipse( im_step, ellipse_temp, cv::Scalar(0,255,255), 3, 8 );
+//            cv::rectangle(im_step, ellipse.boundingRect(), cv::Scalar(255,0,255), 3, 8 );
+//            cv::rectangle(im_step, ellipse_temp.boundingRect(), cv::Scalar(255,255,255), 3, 8 );
+//            imshow( "Ellipses Deletion Steps", im_step );
+//            cv::waitKey(0);
         }
     }
 }
@@ -256,13 +290,11 @@ void circleDetection::clear_output(QDir Dir_extracted_coins)
     }
 }
 
-void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_number, int size)
+void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_number, int size, cv::Rect rect)
 {
     // Extract one coins in an output floder
     cv::Mat extracted_coin;
-    extracted_coin = coin_image(cv::Rect(vector_coins[coin_number].center.x-vector_coins[coin_number].radius,
-                                         vector_coins[coin_number].center.y-vector_coins[coin_number].radius,
-                                         vector_coins[coin_number].radius*2,vector_coins[coin_number].radius*2));
+    extracted_coin = coin_image(rect);
     std::string name_extracted_coin = "output/coin" + std::to_string(coin_number) + ".jpg";
     cv::Size newsize;
     newsize.height = size;
@@ -271,31 +303,104 @@ void circleDetection::extract_one_coin(cv::Mat coin_image, unsigned int coin_num
     cv::imwrite( name_extracted_coin, extracted_coin);
 }
 
-void circleDetection::extraction_square(QDir Dir_extracted_coins, int size)
+void circleDetection::extraction_circle_in_square(int size)
 {
-    clear_output(Dir_extracted_coins);
-
     // Extract each coins in an output floder
-    for( unsigned int i = 0; i < vector_coins.size(); i++ )
+    for( unsigned int i = 0; i < circles.size(); i++ )
     {
-        extract_one_coin(initial_image_for_detection, i, size);
+        cv::Rect rect(circles[i].center.x-circles[i].radius,
+                      circles[i].center.y-circles[i].radius,
+                      circles[i].radius*2,circles[i].radius*2);
+
+        extract_one_coin(initial_image_for_detection, i, size, rect);
     }
 }
 
-void circleDetection::extraction_circle(QDir Dir_extracted_coins, int size)
+void circleDetection::extraction_ellipse_in_square(int size)
 {
-    clear_output(Dir_extracted_coins);
+    // Extract each coins in an output floder
+    for( unsigned int i = 0; i < ellipses.size(); i++ )
+    {
+        cv::Rect rect = ellipses[i].boundingRect();
+
+        // Checking if the bounding box belongs to the image
+        if(0 > rect.x)
+        {
+            rect.width = rect.x + rect.width;
+            rect.x = 0;
+        }
+        if(0 > rect.y)
+        {
+            rect.height = rect.y + rect.height;
+            rect.y = 0;
+        }
+        if((rect.x + rect.width) > initial_image_for_detection.cols)
+        {
+            rect.width = initial_image_for_detection.cols - rect.x ;
+        }
+        if((rect.y + rect.height) > initial_image_for_detection.rows)
+        {
+            rect.height = initial_image_for_detection.rows - rect.y ;
+        }
+
+        extract_one_coin(initial_image_for_detection, i, size, rect);
+    }
+}
+
+void circleDetection::extraction_circle(int size)
+{
 
     // Extract each coins in an output floder
-    for( unsigned int i = 0; i < vector_coins.size(); i++ )
+    for( unsigned int i = 0; i < circles.size(); i++ )
     {
         // Segmentation of the coin thanks to a mask
         cv::Mat binary_mask(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
-        cv::circle(binary_mask, vector_coins[i].center, vector_coins[i].radius, cv::Scalar(255,255,255), CV_FILLED);
+        cv::circle(binary_mask, circles[i].center, circles[i].radius, cv::Scalar(255,255,255), CV_FILLED);
         cv::Mat unique_coin_image(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
         initial_image_for_detection.copyTo(unique_coin_image, binary_mask);
 
-        extract_one_coin(unique_coin_image, i, size);
+        cv::Rect rect(circles[i].center.x-circles[i].radius,
+                      circles[i].center.y-circles[i].radius,
+                      circles[i].radius*2,circles[i].radius*2);
+
+        extract_one_coin(unique_coin_image, i, size, rect);
+    }
+}
+
+void circleDetection::extraction_ellipse(int size)
+{
+
+    // Extract each coins in an output floder
+    for( unsigned int i = 0; i < ellipses.size(); i++ )
+    {
+        // Segmentation of the coin thanks to a mask
+        cv::Mat binary_mask(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
+        cv::ellipse(binary_mask, ellipses[i], cv::Scalar(255,255,255), CV_FILLED);
+        cv::Mat unique_coin_image(initial_image_for_detection.size(), CV_8UC3, cv::Scalar(0,0,0));
+        initial_image_for_detection.copyTo(unique_coin_image, binary_mask);
+
+        cv::Rect rect = ellipses[i].boundingRect();
+
+        // Checking if the bounding box belongs to the image
+        if(0 > rect.x)
+        {
+            rect.width = rect.x + rect.width;
+            rect.x = 0;
+        }
+        if(0 > rect.y)
+        {
+            rect.height = rect.y + rect.height;
+            rect.y = 0;
+        }
+        if((rect.x + rect.width) > initial_image_for_detection.cols)
+        {
+            rect.width = initial_image_for_detection.cols - rect.x ;
+        }
+        if((rect.y + rect.height) > initial_image_for_detection.rows)
+        {
+            rect.height = initial_image_for_detection.rows - rect.y ;
+        }
+        extract_one_coin(unique_coin_image, i, size, rect);
     }
 }
 
@@ -306,16 +411,15 @@ void circleDetection::extraction_circle(QDir Dir_extracted_coins, int size)
 void circleDetection::draw_circles()
 {
     cv::Mat im;
-    im=initial_image_for_detection.clone();
+    im = initial_image_for_detection.clone();
 
-    for( size_t i = 0; i < vector_coins.size(); i++ )
+    for( size_t i = 0; i < circles.size(); i++ )
     {
-
         // Draw the circles
         // circle center
-        circle( im, vector_coins[i].center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
+        cv::circle( im, circles[i].center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
         // circle outline
-        circle( im, vector_coins[i].center, vector_coins[i].radius, cv::Scalar(0,0,255), 3, 8, 0 );
+        cv::circle( im, circles[i].center, circles[i].radius, cv::Scalar(0,0,255), 3, 8, 0 );
     }
 
     imshow( "Circle detection", im );
@@ -325,23 +429,24 @@ void circleDetection::draw_circles()
 void circleDetection::draw_ellipses()
 {
     cv::Mat im;
-    im=initial_image_for_detection.clone();
+    im = initial_image_for_detection.clone();
     for( size_t i = 0; i< ellipses.size(); i++ )
     {
-        cv::ellipse( im, ellipses[i], cv::Scalar(0,0,255), 3, 8 );
+        cv::ellipse( im, ellipses[i], cv::Scalar(255,0,0), 3, 8 );
+        cv::rectangle(im, ellipses[i].boundingRect(), cv::Scalar(255,0,255), 3, 8 );
     }
     imshow( "Ellipses detection", im );
     cv::waitKey(0);
 }
 
-void circleDetection::draw_contours(std::vector<std::vector<cv::Point> > contours)
+void circleDetection::draw_contours()
 {
 
     cv::Mat im;
-    im=initial_image_for_detection.clone();
+    im = initial_image_for_detection.clone();
     for( size_t i = 0; i< contours.size(); i++ )
     {
-        cv::drawContours( im, contours, (int)i, cv::Scalar(0,0,255), 3, 8);
+        cv::drawContours( im, contours, (int)i, cv::Scalar(0,255,255), 3, 8);
     }
     imshow( "Contours detection", im );
     cv::waitKey(0);
@@ -355,36 +460,32 @@ void circleDetection::detection()
 {
     preTreatment();
     if(method == 1)
-        HoughDetection();
-    else if(method == 2)
-        ContourDetection();
-    if(method == 3)
     {
-        method = 1;
-        preTreatment();
         HoughDetection();
-        post_treatment();
-        curent_image_for_detection = initial_image_for_detection.clone();
-        method = 2;
-        preTreatment();
+    }
+    else // method = 2
+    {
         ContourDetection();
-        post_treatment();
-        method = 3;
     }
     post_treatment();
-
-    if(debug)
-        draw_circles();
 }
 
 void circleDetection::extraction(QDir Dir_extracted_coins, int score_method, int size)
 {
+    clear_output(Dir_extracted_coins);
+
     if(score_method == 3)
     {
-        extraction_circle(Dir_extracted_coins, size);
+        if(method == 1)
+            extraction_circle(size);
+        else // 2
+            extraction_ellipse(size);
     }
-    else
+    else // score method = 1 or 2
     {
-        extraction_square(Dir_extracted_coins, size);
+        if(method == 1)
+            extraction_circle_in_square(size);
+        else
+            extraction_ellipse_in_square(size);
     }
 }
